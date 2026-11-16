@@ -19,7 +19,6 @@
       <div class="topbar-actions">
         <div id="datasetStatus" class="status-pill">Loading data...</div>
         <button id="btnOpenServerModal" type="button" class="btn btn-secondary" data-i18n="loadServerJsonBtn">Load server-pings.json</button>
-        <button id="btnToggleLang" type="button" class="btn btn-ghost" title="Switch language">PL</button>
       </div>
     </div>
   </header>
@@ -82,33 +81,50 @@
       </div>
     </section>
 
-    <!-- STEP 2: Summary & recommendations -->
+    <!-- STEP 2: Summary & recommendations (collapsed until the heading icon is clicked) -->
     <section class="card hidden" id="summarySection">
-      <div class="card-header">
-        <div>
+      <div class="card-header summary-header">
+        <div class="summary-title-row">
+          <button
+            id="btnToggleSummary"
+            type="button"
+            class="summary-toggle"
+            aria-expanded="false"
+            aria-controls="summaryDetails"
+            title="Show details"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="9 6 15 12 9 18" />
+            </svg>
+          </button>
           <h2 data-i18n="step2Title">2. Where does a proxy help most?</h2>
-          <p class="muted" data-i18n="step2Desc">Best proxy server for each target server. Click a row to highlight that target column below.</p>
         </div>
-        <button id="btnCopySummary" type="button" class="btn btn-secondary" data-i18n="copySummaryBtn">Copy summary</button>
       </div>
 
-      <div id="kpiRow" class="kpi-row"></div>
+      <div id="summaryDetails" class="summary-details hidden">
+        <div class="summary-details-head">
+          <p class="muted" data-i18n="step2Desc">Best proxy server for each target server. Click a row to highlight that target column below.</p>
+          <button id="btnCopySummary" type="button" class="btn btn-secondary" data-i18n="copySummaryBtn">Copy summary</button>
+        </div>
 
-      <div class="table-scroll">
-        <table class="summary-table" id="summaryTable">
-          <thead>
-            <tr>
-              <th data-i18n="colTarget">Target server</th>
-              <th data-i18n="colDirect">Direct</th>
-              <th data-i18n="colBestProxy">Best proxy</th>
-              <th data-i18n="colRoute">Path breakdown (You→Proxy + Proxy→Target)</th>
-              <th data-i18n="colViaProxy">Total via proxy</th>
-              <th data-i18n="colDelta">Gain / Loss</th>
-              <th data-i18n="colAlternatives">Alternatives</th>
-            </tr>
-          </thead>
-          <tbody id="summaryBody"></tbody>
-        </table>
+        <div id="kpiRow" class="kpi-row"></div>
+
+        <div class="table-scroll">
+          <table class="summary-table" id="summaryTable">
+            <thead>
+              <tr>
+                <th data-i18n="colTarget">Target server</th>
+                <th data-i18n="colDirect">Direct</th>
+                <th data-i18n="colBestProxy">Best proxy</th>
+                <th data-i18n="colRoute">Path breakdown (You→Proxy + Proxy→Target)</th>
+                <th data-i18n="colViaProxy">Total via proxy</th>
+                <th data-i18n="colDelta">Gain / Loss</th>
+                <th data-i18n="colAlternatives">Alternatives</th>
+              </tr>
+            </thead>
+            <tbody id="summaryBody"></tbody>
+          </table>
+        </div>
       </div>
     </section>
 
@@ -118,66 +134,6 @@
         <div>
           <h2 data-i18n="step3Title">3. Every-to-every matrix (Proxy × Target server)</h2>
           <p class="muted" id="matrixSubtitle" data-i18n="step3DescNoPlayer">Showing server-to-server pings. Paste your pings or drop my-pings.json in step 1 to see +/- ms savings through each proxy.</p>
-        </div>
-      </div>
-
-      <div class="toolbar">
-        <div class="tool-item">
-          <label for="viewModeSelect" data-i18n="viewModeLabel">Cell display</label>
-          <select id="viewModeSelect">
-            <option value="full" data-i18n="modeFull">Delta (+/- ms) + Total + S2S</option>
-            <option value="delta" data-i18n="modeDelta">Delta only (+/- ms)</option>
-            <option value="total" data-i18n="modeTotal">Total via proxy only</option>
-            <option value="s2s" data-i18n="modeS2S">Server ↔ server only</option>
-          </select>
-        </div>
-
-        <div class="tool-item">
-          <label for="metricSelect" data-i18n="metricLabel">Metric</label>
-          <select id="metricSelect">
-            <option value="avg" data-i18n="metricAvg">Average (avg)</option>
-            <option value="median" data-i18n="metricMedian">Median (median)</option>
-            <option value="min" data-i18n="metricMin">Minimum (min)</option>
-          </select>
-        </div>
-
-        <div class="tool-item">
-          <label for="thresholdSelect" data-i18n="thresholdLabel">Gain threshold</label>
-          <select id="thresholdSelect">
-            <option value="1">≥ 1 ms</option>
-            <option value="5" selected>≥ 5 ms</option>
-            <option value="10">≥ 10 ms</option>
-            <option value="20">≥ 20 ms</option>
-          </select>
-        </div>
-
-        <div class="tool-item">
-          <label for="filterRowInput" data-i18n="filterRowLabel">Filter rows</label>
-          <input id="filterRowInput" type="text" placeholder="e.g. PL, OVH, 1.2..." />
-        </div>
-
-        <div class="tool-item">
-          <label for="filterColInput" data-i18n="filterColLabel">Filter columns</label>
-          <input id="filterColInput" type="text" placeholder="e.g. USA, DE..." />
-        </div>
-
-        <div class="tool-checks">
-          <label class="check-label">
-            <input id="chkOnlyProfitable" type="checkbox" />
-            <span data-i18n="onlyProfitable">Only beneficial proxies</span>
-          </label>
-          <label class="check-label">
-            <input id="chkReverseFallback" type="checkbox" checked />
-            <span data-i18n="reverseFallback">Use reverse (Target→Proxy) if Proxy→Target missing</span>
-          </label>
-          <label class="check-label hidden" id="onlyPingProxyWrap">
-            <input id="chkOnlyPingAsProxy" type="checkbox" checked />
-            <span data-i18n="onlyPingAsProxy">Test onlyping servers as proxies</span>
-          </label>
-        </div>
-
-        <div class="tool-actions">
-          <button id="btnSwapAxes" type="button" class="btn btn-secondary btn-sm" data-i18n="swapAxesBtn">Swap axes</button>
         </div>
       </div>
 

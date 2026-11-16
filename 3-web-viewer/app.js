@@ -3,101 +3,10 @@
 
   var PA = window.ProxyAnalyzer;
 
+  var MATRIX_METRIC = 'median';
+  var MATRIX_THRESHOLD_MS = 5;
+
   var I18N = {
-    pl: {
-      title: 'Proxy Ping Analyzer',
-      subtitle: 'Porównaj bezpośredni ping do serwerów z trasą przez serwery proxy (macierz każdy-do-każdego).',
-      loadServerJsonBtn: 'Wgraj server-pings.json',
-      demoBannerTitle: 'Dane przykładowe (demo):',
-      demoBannerText:
-        'Wyświetlane są przykładowe pomiary serwer↔serwer. Podmień plik <code>data/server-pings.json</code> (lub kliknij „Wgraj server-pings.json”), aby użyć własnych wyników z <code>collect_pings.py</code>.',
-      step1Title: '1. Twój ping do serwerów',
-      step1Desc:
-        'Uruchom <code>ping-servers.bat</code> (lub <code>ping-servers.php</code>) na swoim komputerze, a następnie wklej wynik ze schowka lub przeciągnij i upuść plik <code>my-pings.json</code> w dowolne miejsce na stronie.',
-      pasteClipboardBtn: 'Wklej ze schowka',
-      uploadPlayerBtn: 'Wgraj my-pings.json',
-      clearBtn: 'Wyczyść',
-      playerInputPlaceholder:
-        'Wklej zawartość my-pings.json tutaj albo przeciągnij i upuść plik w dowolne miejsce strony (obsługuje też linie typu 1.2.3.4=35)...',
-      dropHintText:
-        'Możesz też przeciągnąć i upuścić plik <code>my-pings.json</code> w dowolne miejsce tej strony (lub kliknąć tutaj, aby wybrać plik).',
-      dropPlayerTitle: 'Upuść plik my-pings.json tutaj',
-      dropPlayerDesc: 'Puść w dowolnym miejscu strony, aby wczytać pomiary pingu (.json, .txt, .csv)',
-      dropServerTitle: 'Upuść plik server-pings.json tutaj',
-      dropServerDesc: 'Puść, aby wczytać dane serwerów do pola JSON',
-      dropServerHintInPlayer:
-        'Ten plik wygląda na server-pings.json. Kliknij najpierw „Wgraj server-pings.json” w górnym pasku (a potem upuść lub wybierz plik tam).',
-      fileEmptyErr: 'Plik „{name}” jest pusty.',
-      fileTooLargeErr: 'Plik „{name}” jest za duży (maks. 10 MB).',
-      fileBinaryErr: 'Plik „{name}” nie wygląda na plik tekstowy / JSON.',
-      fileReadErr: 'Nie udało się odczytać pliku „{name}”.',
-      dropFolderErr: 'Upuszczono folder — przeciągnij plik my-pings.json.',
-      demoPresetsLabel: 'Przykłady testowe:',
-      presetBR: 'Gracz z Brazylii (słaba trasa do EU)',
-      presetPL: 'Gracz z Polski (niski ping w EU)',
-      directPingsHeading: 'Twoje bezpośrednie pingi (ms)',
-      directPingsHint: 'Możesz też wpisać/zmienić ręcznie',
-      step2Title: '2. Gdzie proxy najbardziej pomaga?',
-      step2Desc:
-        'Najlepsze znalezione proxy dla każdego serwera docelowego. Kliknij wiersz, aby podświetlić kolumnę w tabeli poniżej.',
-      copySummaryBtn: 'Kopiuj podsumowanie',
-      colTarget: 'Serwer docelowy',
-      colDirect: 'Bezpośrednio',
-      colBestProxy: 'Najlepsze proxy',
-      colRoute: 'Rozbicie trasy (Gracz→Proxy + Proxy→Cel)',
-      colViaProxy: 'Łącznie przez proxy',
-      colDelta: 'Zysk / Strata',
-      colAlternatives: 'Kolejne opcje',
-      step3Title: '3. Tabela każdy-do-każdego (Proxy × Serwer docelowy)',
-      step3DescNoPlayer:
-        'Aktualnie wyświetlane są pingi między serwerami. Wklej swój ping lub upuść plik my-pings.json w kroku 1, aby zobaczyć +/- ms przez każde proxy.',
-      step3DescWithPlayer:
-        'Ujemna wartość zielona (np. -28 ms) oznacza oszczędność czasu przy połączeniu przez proxy. Gwiazdka ★ oznacza najlepsze proxy dla danego celu.',
-      viewModeLabel: 'Widok komórek',
-      modeFull: 'Delta (+/- ms) + Suma + S2S',
-      modeDelta: 'Tylko zysk / strata (+/- ms)',
-      modeTotal: 'Tylko łączny ping przez proxy',
-      modeS2S: 'Tylko ping serwer ↔ serwer',
-      metricLabel: 'Metryka',
-      metricAvg: 'Średni (avg)',
-      metricMedian: 'Mediana (median)',
-      metricMin: 'Minimalny (min)',
-      thresholdLabel: 'Próg opłacalności',
-      filterRowLabel: 'Filtruj wiersze (Proxy)',
-      filterColLabel: 'Filtruj kolumny (Cel)',
-      onlyProfitable: 'Tylko opłacalne proxy',
-      reverseFallback: 'Użyj odwrotnego (Cel→Proxy), gdy brak Proxy→Cel',
-      onlyPingAsProxy: 'Testuj serwery onlyping jako proxy',
-      onlyPingTooltip: 'Serwer bez dostępu SSH (onlyping) — pingowany z serwerów SSH i od gracza; jako proxy używa odwrotnego pomiaru Cel→Proxy (~)',
-      reverseOnlyPingNote: 'onlyping: użyto pomiaru Cel→Proxy',
-      reverseFallbackNote: 'kierunek odwrotny Cel→Proxy',
-      bothOnlyPingUnavailable: 'oba serwery onlyping — brak pomiaru S2S między nimi',
-      onlyPingReverseDisabled: 'onlyping — włącz „Użyj odwrotnego (Cel→Proxy)”, aby przetestować jako proxy',
-      noMeasurement: 'brak pomiaru',
-      swapAxesBtn: 'Zamień osie',
-      inspectorDefault:
-        'Najedź na dowolną komórkę w tabeli, aby zobaczyć dokładne wyliczenie ścieżki.',
-      legBest: '★ Najlepsze proxy dla celu',
-      legGain: 'Oszczędność (≥ próg)',
-      legSlight: 'Minimalny zysk (< próg)',
-      legWorse: 'Wolniej przez proxy (+ms)',
-      legSelf: 'Bezpośrednio (Proxy = Cel)',
-      legRescued: 'Odzyskane (brak trasy bezp.)',
-      modalTitle: 'Załaduj plik server-pings.json',
-      modalDesc:
-        'Wybierz plik wygenerowany przez <code>1-ssh-ping-collector/collect_pings.py</code>, przeciągnij go tutaj lub wklej jego zawartość JSON poniżej.',
-      modalChooseFile: 'Wybierz plik .json',
-      modalApply: 'Zastosuj dane serwerów',
-      directWord: 'Bezpośrednio',
-      rescuedWord: 'Odzyskane',
-      noImprovement: 'Lepiej bezpośrednio',
-      none: 'Brak',
-      kpiImproved: 'Cele z zyskiem przez proxy',
-      kpiBestSaving: 'Największa oszczędność',
-      kpiRescued: 'Odzyskane połączenia',
-      kpiPlayerCount: 'Zbadane serwery',
-    },
-    en: {
       title: 'Proxy Ping Analyzer',
       subtitle: 'Compare direct server latency against routing through proxy servers (every-to-every matrix).',
       loadServerJsonBtn: 'Load server-pings.json',
@@ -188,22 +97,11 @@
       kpiBestSaving: 'Biggest ping reduction',
       kpiRescued: 'Rescued unreachable targets',
       kpiPlayerCount: 'Measured servers',
-    },
   };
 
   var state = {
-    lang: 'en',
     serverData: null,
     playerPings: null,
-    viewMode: 'full',
-    metric: 'avg',
-    thresholdMs: 5,
-    filterRow: '',
-    filterCol: '',
-    onlyProfitable: false,
-    allowReverseFallback: true,
-    allowOnlyPingAsProxy: true,
-    swapAxes: false,
     highlightedTargetIp: null,
   };
 
@@ -219,23 +117,14 @@
     btnPresetBR: document.getElementById('btnPresetBR'),
     btnPresetPL: document.getElementById('btnPresetPL'),
     summarySection: document.getElementById('summarySection'),
+    summaryDetails: document.getElementById('summaryDetails'),
+    btnToggleSummary: document.getElementById('btnToggleSummary'),
     kpiRow: document.getElementById('kpiRow'),
     summaryBody: document.getElementById('summaryBody'),
     btnCopySummary: document.getElementById('btnCopySummary'),
     matrixSubtitle: document.getElementById('matrixSubtitle'),
-    viewModeSelect: document.getElementById('viewModeSelect'),
-    metricSelect: document.getElementById('metricSelect'),
-    thresholdSelect: document.getElementById('thresholdSelect'),
-    filterRowInput: document.getElementById('filterRowInput'),
-    filterColInput: document.getElementById('filterColInput'),
-    chkOnlyProfitable: document.getElementById('chkOnlyProfitable'),
-    chkReverseFallback: document.getElementById('chkReverseFallback'),
-    onlyPingProxyWrap: document.getElementById('onlyPingProxyWrap'),
-    chkOnlyPingAsProxy: document.getElementById('chkOnlyPingAsProxy'),
-    btnSwapAxes: document.getElementById('btnSwapAxes'),
     cellInspector: document.getElementById('cellInspector'),
     matrixTable: document.getElementById('matrixTable'),
-    btnToggleLang: document.getElementById('btnToggleLang'),
     btnOpenServerModal: document.getElementById('btnOpenServerModal'),
     btnCloseServerModal: document.getElementById('btnCloseServerModal'),
     serverModal: document.getElementById('serverModal'),
@@ -251,7 +140,7 @@
   };
 
   function t(key) {
-    return (I18N[state.lang] && I18N[state.lang][key]) || I18N.pl[key] || key;
+    return I18N[key] || key;
   }
 
   function escapeHtml(str) {
@@ -276,8 +165,7 @@
   }
 
   function applyLanguage() {
-    document.documentElement.lang = state.lang;
-    els.btnToggleLang.textContent = state.lang === 'pl' ? 'EN' : 'PL';
+    document.documentElement.lang = 'en';
     var nodes = document.querySelectorAll('[data-i18n]');
     for (var i = 0; i < nodes.length; i++) {
       var key = nodes[i].getAttribute('data-i18n');
@@ -304,9 +192,11 @@
     return Boolean(state.playerPings && Object.keys(state.playerPings).length > 0);
   }
 
-  function renderOnlyPingBadge(srv) {
+  function renderOnlyPingBadge(srv, compact) {
     if (!srv || !srv.onlyPing) return '';
-    return '<span class="badge-onlyping" title="' + escapeHtml(t('onlyPingTooltip')) + '">onlyping</span>';
+    var label = compact ? 'P' : 'onlyping';
+    var cls = compact ? 'badge-onlyping badge-onlyping-compact' : 'badge-onlyping';
+    return '<span class="' + cls + '" title="' + escapeHtml(t('onlyPingTooltip')) + '">' + label + '</span>';
   }
 
   function updateDatasetStatus() {
@@ -320,7 +210,7 @@
       : '';
     var countText = srvCount + (onlyPingCount > 0 ? ' (' + onlyPingCount + ' onlyping)' : '');
     els.datasetStatus.textContent =
-      (state.lang === 'pl' ? 'Serwery: ' : 'Servers: ') +
+      'Servers: ' +
       countText +
       (gen ? ' · ' + gen : '');
   }
@@ -334,13 +224,6 @@
     } else {
       els.demoBanner.classList.add('hidden');
       if (demoPresetsEl) demoPresetsEl.classList.add('hidden');
-    }
-
-    var hasOnlyPing = state.serverData.servers.some(function (s) {
-      return s.onlyPing;
-    });
-    if (els.onlyPingProxyWrap) {
-      els.onlyPingProxyWrap.classList.toggle('hidden', !hasOnlyPing);
     }
 
     updateDatasetStatus();
@@ -401,14 +284,9 @@
       els.playerParseStatus.className = 'parse-status err';
     } else {
       state.playerPings = res.pings;
-      var msg =
-        state.lang === 'pl'
-          ? 'Rozpoznano ping dla ' + res.matchedCount + ' / ' + res.totalKnown + ' serwerów.'
-          : 'Matched pings for ' + res.matchedCount + ' / ' + res.totalKnown + ' servers.';
+      var msg = 'Matched pings for ' + res.matchedCount + ' / ' + res.totalKnown + ' servers.';
       if (res.unrecognizedKeys.length > 0) {
-        msg +=
-          (state.lang === 'pl' ? ' Pominięto nieznane IP: ' : ' Ignored unknown IPs: ') +
-          res.unrecognizedKeys.slice(0, 5).join(', ');
+        msg += ' Ignored unknown IPs: ' + res.unrecognizedKeys.slice(0, 5).join(', ');
       }
       els.playerParseStatus.textContent = msg;
       els.playerParseStatus.className = 'parse-status ok';
@@ -424,7 +302,7 @@
     var html = servers
       .map(function (srv) {
         var entry = state.playerPings && state.playerPings[srv.ip];
-        var val = entry && typeof entry[state.metric] === 'number' ? entry[state.metric] : '';
+        var val = entry && typeof entry[MATRIX_METRIC] === 'number' ? entry[MATRIX_METRIC] : '';
         return (
           '<div class="direct-ping-chip">' +
           '  <div class="srv-name" title="' + escapeHtml(srv.label) + '">' + escapeHtml(srv.label) + '</div>' +
@@ -440,17 +318,21 @@
     els.directPingsGrid.innerHTML = html;
   }
 
+  function matrixOptions(metric) {
+    return {
+      metric: metric || MATRIX_METRIC,
+      thresholdMs: MATRIX_THRESHOLD_MS,
+      allowReverseFallback: true,
+      allowOnlyPingAsProxy: true,
+    };
+  }
+
   function renderAnalysis() {
     if (!state.serverData) return;
     var hasPlayer = hasPlayerPings();
     els.matrixSubtitle.textContent = hasPlayer ? t('step3DescWithPlayer') : t('step3DescNoPlayer');
 
-    var summary = PA.summarizeByTarget(state.serverData, state.playerPings, {
-      metric: state.metric,
-      thresholdMs: state.thresholdMs,
-      allowReverseFallback: state.allowReverseFallback,
-      allowOnlyPingAsProxy: state.allowOnlyPingAsProxy,
-    });
+    var summary = PA.summarizeByTarget(state.serverData, state.playerPings, matrixOptions());
 
     if (hasPlayer) {
       els.summarySection.classList.remove('hidden');
@@ -488,7 +370,7 @@
       '<div class="kpi-box">' +
       '  <div class="kpi-label">' + escapeHtml(t('kpiImproved')) + '</div>' +
       '  <div class="kpi-value ' + (st.improvedCount > 0 ? 'gain' : '') + '">' + st.improvedCount + ' / ' + st.totalTargets + '</div>' +
-      '  <div class="kpi-sub">' + escapeHtml(t('thresholdLabel')) + ': ≥ ' + state.thresholdMs + ' ms</div>' +
+      '  <div class="kpi-sub">' + escapeHtml(t('thresholdLabel')) + ': ≥ ' + MATRIX_THRESHOLD_MS + ' ms</div>' +
       '</div>' +
       '<div class="kpi-box">' +
       '  <div class="kpi-label">' + escapeHtml(t('kpiBestSaving')) + '</div>' +
@@ -500,7 +382,7 @@
       '  <div class="kpi-sub">' +
       (st.rescuedCount > 0
         ? escapeHtml(t('kpiRescued')) + ': ' + st.rescuedCount
-        : escapeHtml(t('metricLabel')) + ': ' + state.metric) +
+        : escapeHtml(t('metricLabel')) + ': ' + MATRIX_METRIC) +
       '</div>' +
       '</div>';
 
@@ -573,146 +455,122 @@
     els.summaryBody.innerHTML = rowsHtml;
   }
 
-  function serverMatchesFilter(srv, query) {
-    if (!query) return true;
-    var q = query.toLowerCase();
+  function headerPingTag(srv, hasPlayer) {
+    if (!hasPlayer) return '';
+    var entry = state.playerPings[srv.ip];
+    var ping = entry ? entry[MATRIX_METRIC] : null;
+    var loss = entry ? entry.loss : null;
+    if (typeof ping === 'number') {
+      return '<div class="hdr-ping">' + escapeHtml(fmtMs(ping)) + '</div>';
+    }
+    if (loss === 100) return '<div class="hdr-ping dead">timeout</div>';
+    return '<div class="hdr-ping">—</div>';
+  }
+
+  function cellToneClass(cell) {
+    if (cell.kind === 'self') return ' cell-self';
+    if (cell.kind === 'rescued') return ' cell-rescued';
+    if (cell.kind === 'compared') {
+      if (cell.improves) return ' cell-gain';
+      if (cell.slightlyImproves) return ' cell-slight';
+      if (cell.deltaMs > 0) return ' cell-worse';
+      return ' cell-self';
+    }
+    if (cell.kind === 'unavailable') return ' cell-unavailable';
+    return '';
+  }
+
+  function deltaLabel(cell) {
+    if (!cell) return '—';
+    if (cell.kind === 'compared' || cell.kind === 'self') return fmtSignedMs(cell.deltaMs);
+    if (cell.kind === 'rescued') return t('rescuedWord');
+    return '—';
+  }
+
+  function renderPlayerCellStack(cellMin, cellMed, isBest) {
+    var star = isBest ? '<span class="best-star">★</span>' : '';
+    var rev = cellMed.isReverseFallback ? ' ~' : '';
+    var s2s = cellMed.proxyToTargetMs == null ? '—' : fmtMs(cellMed.proxyToTargetMs) + rev;
     return (
-      srv.label.toLowerCase().indexOf(q) !== -1 ||
-      srv.country.toLowerCase().indexOf(q) !== -1 ||
-      srv.datacenter.toLowerCase().indexOf(q) !== -1 ||
-      srv.ip.toLowerCase().indexOf(q) !== -1 ||
-      (srv.onlyPing && 'onlyping'.indexOf(q) !== -1)
+      '<div class="c-sub">min ' + escapeHtml(deltaLabel(cellMin)) + '</div>' +
+      '<div class="c-main">' + star + 'med ' + escapeHtml(deltaLabel(cellMed)) + '</div>' +
+      '<div class="c-sub">S2S ' + escapeHtml(s2s) + '</div>'
+    );
+  }
+
+  function renderS2SCell(cell) {
+    if (cell.kind === 'self' || cell.proxyToTargetMs == null) return '<div class="c-main">—</div>';
+    var rev = cell.isReverseFallback ? ' ~' : '';
+    return (
+      '<div class="c-main">' +
+      escapeHtml(fmtMs(cell.proxyToTargetMs)) +
+      escapeHtml(rev) +
+      '</div>' +
+      (cell.proxyToTargetLoss > 0
+        ? '<div class="c-sub">loss ' + escapeHtml(cell.proxyToTargetLoss) + '%</div>'
+        : '')
     );
   }
 
   function renderMatrix(summary) {
     var servers = state.serverData.servers;
     var hasPlayer = hasPlayerPings();
-    var mode = hasPlayer ? state.viewMode : 's2s';
-    var profitableSet = {};
-    summary.profitableProxyIps.forEach(function (ip) {
-      profitableSet[ip] = true;
-    });
-
-    var rowQuery = state.filterRow.trim();
-    var colQuery = state.filterCol.trim();
-
-    var rowServers = servers.filter(function (s) {
-      if (!serverMatchesFilter(s, rowQuery)) return false;
-      if (!state.swapAxes && !state.allowOnlyPingAsProxy && s.onlyPing) return false;
-      if (!state.swapAxes && state.onlyProfitable && hasPlayer) {
-        return Boolean(profitableSet[s.ip]);
-      }
-      return true;
-    });
-
-    var colServers = servers.filter(function (s) {
-      if (!serverMatchesFilter(s, colQuery)) return false;
-      if (state.swapAxes && !state.allowOnlyPingAsProxy && s.onlyPing) return false;
-      if (state.swapAxes && state.onlyProfitable && hasPlayer) {
-        return Boolean(profitableSet[s.ip]);
-      }
-      return true;
-    });
-
-    var cornerText = state.swapAxes
-      ? (state.lang === 'pl' ? 'Cel ↓  \\  Proxy →' : 'Target ↓  \\  Proxy →')
-      : (state.lang === 'pl' ? 'Proxy ↓  \\  Cel →' : 'Proxy ↓  \\  Target →');
+    var cornerText = 'Proxy ↓  \\  Target →';
 
     var theadHtml = '<thead><tr><th class="corner-cell">' + escapeHtml(cornerText) + '</th>';
-    colServers.forEach(function (colSrv) {
-      var colPing =
-        hasPlayer && state.playerPings[colSrv.ip]
-          ? state.playerPings[colSrv.ip][state.metric]
-          : null;
-      var colLoss =
-        hasPlayer && state.playerPings[colSrv.ip] ? state.playerPings[colSrv.ip].loss : null;
-      var pingTag = '';
-      if (hasPlayer) {
-        if (typeof colPing === 'number') {
-          pingTag = '<div class="hdr-ping">' + escapeHtml(fmtMs(colPing)) + '</div>';
-        } else if (colLoss === 100) {
-          pingTag = '<div class="hdr-ping dead">timeout</div>';
-        } else {
-          pingTag = '<div class="hdr-ping">—</div>';
-        }
-      }
-      var hlClass =
-        !state.swapAxes && state.highlightedTargetIp === colSrv.ip ? ' col-highlighted' : '';
+    servers.forEach(function (colSrv) {
+      var hlClass = state.highlightedTargetIp === colSrv.ip ? ' col-highlighted' : '';
       theadHtml +=
         '<th class="' + hlClass + '" data-col-ip="' + escapeHtml(colSrv.ip) + '">' +
-        '  <div class="hdr-title">' + escapeHtml(colSrv.label) + renderOnlyPingBadge(colSrv) + '</div>' +
+        '  <div class="hdr-title">' + escapeHtml(colSrv.label) + renderOnlyPingBadge(colSrv, true) + '</div>' +
         '  <div class="hdr-ip">' + escapeHtml(colSrv.ip) + '</div>' +
-        pingTag +
+        headerPingTag(colSrv, hasPlayer) +
         '</th>';
     });
     theadHtml += '</tr></thead>';
 
     var tbodyHtml = '<tbody>';
-    rowServers.forEach(function (rowSrv) {
-      var rowPing =
-        hasPlayer && state.playerPings[rowSrv.ip]
-          ? state.playerPings[rowSrv.ip][state.metric]
-          : null;
-      var rowLoss =
-        hasPlayer && state.playerPings[rowSrv.ip] ? state.playerPings[rowSrv.ip].loss : null;
-      var rowTag = '';
-      if (hasPlayer) {
-        if (typeof rowPing === 'number') {
-          rowTag = '<div class="hdr-ping">' + escapeHtml(fmtMs(rowPing)) + '</div>';
-        } else if (rowLoss === 100) {
-          rowTag = '<div class="hdr-ping dead">timeout</div>';
-        } else {
-          rowTag = '<div class="hdr-ping">—</div>';
-        }
-      }
-
+    servers.forEach(function (rowSrv) {
       tbodyHtml += '<tr>';
       tbodyHtml +=
         '<th class="row-header" data-row-ip="' + escapeHtml(rowSrv.ip) + '">' +
         '  <div class="hdr-title">' + escapeHtml(rowSrv.label) + renderOnlyPingBadge(rowSrv) + '</div>' +
         '  <div class="hdr-ip">' + escapeHtml(rowSrv.ip) + '</div>' +
-        rowTag +
+        headerPingTag(rowSrv, hasPlayer) +
         '</th>';
 
-      colServers.forEach(function (colSrv) {
-        var proxySrv = state.swapAxes ? colSrv : rowSrv;
-        var targetSrv = state.swapAxes ? rowSrv : colSrv;
-        var cell = PA.evaluateCell(state.serverData, state.playerPings, proxySrv.ip, targetSrv.ip, {
-          metric: state.metric,
-          thresholdMs: state.thresholdMs,
-          allowReverseFallback: state.allowReverseFallback,
-        });
+      servers.forEach(function (colSrv) {
+        var cellMed = PA.evaluateCell(
+          state.serverData,
+          state.playerPings,
+          rowSrv.ip,
+          colSrv.ip,
+          matrixOptions(MATRIX_METRIC)
+        );
+        var cellMin = hasPlayer
+          ? PA.evaluateCell(
+              state.serverData,
+              state.playerPings,
+              rowSrv.ip,
+              colSrv.ip,
+              matrixOptions('min')
+            )
+          : null;
 
-        var isBest =
-          hasPlayer && summary.bestByTargetIp[targetSrv.ip] === proxySrv.ip;
-
-        var cls = 'matrix-cell';
-        if (cell.kind === 'self') cls += ' cell-self';
-        else if (cell.kind === 'rescued') cls += ' cell-rescued';
-        else if (cell.kind === 'compared') {
-          if (cell.improves) cls += ' cell-gain';
-          else if (cell.slightlyImproves) cls += ' cell-slight';
-          else if (cell.deltaMs > 0) cls += ' cell-worse';
-          else cls += ' cell-self';
-        } else if (cell.kind === 'unavailable') {
-          cls += ' cell-unavailable';
-        }
-
+        var isBest = hasPlayer && summary.bestByTargetIp[colSrv.ip] === rowSrv.ip;
+        var cls = 'matrix-cell' + cellToneClass(cellMed);
         if (isBest) cls += ' cell-best';
-        if (!state.swapAxes && state.highlightedTargetIp === targetSrv.ip) {
-          cls += ' col-highlighted';
-        }
+        if (state.highlightedTargetIp === colSrv.ip) cls += ' col-highlighted';
 
-        var inner = renderCellContent(cell, mode, isBest);
+        var inner = hasPlayer ? renderPlayerCellStack(cellMin, cellMed, isBest) : renderS2SCell(cellMed);
 
         tbodyHtml +=
           '<td class="' +
           cls +
           '" data-proxy-ip="' +
-          escapeHtml(proxySrv.ip) +
+          escapeHtml(rowSrv.ip) +
           '" data-target-ip="' +
-          escapeHtml(targetSrv.ip) +
+          escapeHtml(colSrv.ip) +
           '" data-col-ip="' +
           escapeHtml(colSrv.ip) +
           '" data-row-ip="' +
@@ -728,88 +586,6 @@
     els.matrixTable.innerHTML = theadHtml + tbodyHtml;
   }
 
-  function renderCellContent(cell, mode, isBest) {
-    var star = isBest ? '<span class="best-star">★</span>' : '';
-    var rev = cell.isReverseFallback ? ' ~' : '';
-
-    if (cell.kind === 'self') {
-      if (mode === 's2s') return '<div class="c-main">—</div>';
-      var directTxt = cell.directToTargetMs != null ? fmtMs(cell.directToTargetMs) : '—';
-      return '<div class="c-main">' + escapeHtml(t('directWord')) + '</div><div class="c-sub">' + escapeHtml(directTxt) + '</div>';
-    }
-
-    if (cell.kind === 's2s_only' || mode === 's2s') {
-      if (cell.proxyToTargetMs == null) return '<div class="c-main">—</div>';
-      return (
-        '<div class="c-main">' +
-        escapeHtml(fmtMs(cell.proxyToTargetMs)) +
-        escapeHtml(rev) +
-        '</div>' +
-        (cell.proxyToTargetLoss > 0
-          ? '<div class="c-sub">loss ' + escapeHtml(cell.proxyToTargetLoss) + '%</div>'
-          : '')
-      );
-    }
-
-    if (cell.kind === 'rescued') {
-      return (
-        '<div class="c-main">' +
-        star +
-        escapeHtml(t('rescuedWord')) +
-        '</div><div class="c-sub">' +
-        escapeHtml(fmtMs(cell.totalViaProxyMs)) +
-        escapeHtml(rev) +
-        '</div>'
-      );
-    }
-
-    if (cell.kind === 'no_direct') {
-      return (
-        '<div class="c-main">' +
-        escapeHtml(fmtMs(cell.totalViaProxyMs)) +
-        '</div><div class="c-sub">S2S: ' +
-        escapeHtml(fmtMs(cell.proxyToTargetMs)) +
-        escapeHtml(rev) +
-        '</div>'
-      );
-    }
-
-    if (cell.kind !== 'compared') {
-      return '<div class="c-main">—</div>';
-    }
-
-    if (mode === 'delta') {
-      return '<div class="c-main">' + star + escapeHtml(fmtSignedMs(cell.deltaMs)) + '</div>';
-    }
-    if (mode === 'total') {
-      return (
-        '<div class="c-main">' +
-        star +
-        escapeHtml(fmtMs(cell.totalViaProxyMs)) +
-        '</div><div class="c-sub">vs ' +
-        escapeHtml(fmtMs(cell.directToTargetMs)) +
-        '</div>'
-      );
-    }
-
-    // Default 'full' mode
-    return (
-      '<div class="c-main">' +
-      star +
-      escapeHtml(fmtSignedMs(cell.deltaMs)) +
-      '</div>' +
-      '<div class="c-sub">' +
-      escapeHtml(fmtMs(cell.totalViaProxyMs)) +
-      ' vs ' +
-      escapeHtml(fmtMs(cell.directToTargetMs)) +
-      '</div>' +
-      '<div class="c-sub">S2S: ' +
-      escapeHtml(fmtMs(cell.proxyToTargetMs)) +
-      escapeHtml(rev) +
-      '</div>'
-    );
-  }
-
   function updateInspector(proxyIp, targetIp) {
     if (!state.serverData) return;
     var byIp = {};
@@ -820,11 +596,7 @@
     var tSrv = byIp[targetIp];
     if (!pSrv || !tSrv) return;
 
-    var cell = PA.evaluateCell(state.serverData, state.playerPings, proxyIp, targetIp, {
-      metric: state.metric,
-      thresholdMs: state.thresholdMs,
-      allowReverseFallback: state.allowReverseFallback,
-    });
+    var cell = PA.evaluateCell(state.serverData, state.playerPings, proxyIp, targetIp, matrixOptions());
 
     if (cell.kind === 'self') {
       els.cellInspector.innerHTML =
@@ -858,18 +630,15 @@
 
     if (cell.kind === 'compared') {
       var cls = cell.deltaMs < 0 ? 'badge-gain' : 'badge-neutral';
-      var youProxyLbl = state.lang === 'pl' ? 'Gracz→Proxy' : 'You→Proxy';
-      var proxyTargetLbl = state.lang === 'pl' ? 'Proxy→Cel' : 'Proxy→Target';
-      var targetLbl = state.lang === 'pl' ? 'Cel' : 'Target';
       els.cellInspector.innerHTML =
         '<span>Proxy: <strong>' +
         escapeHtml(pSrv.label) +
-        '</strong>' + renderOnlyPingBadge(pSrv) + ' → ' + targetLbl + ': <strong>' +
+        '</strong>' + renderOnlyPingBadge(pSrv) + ' → Target: <strong>' +
         escapeHtml(tSrv.label) +
         '</strong>' + renderOnlyPingBadge(tSrv) + '</span>' +
-        '<span>| ' + youProxyLbl + ': <strong>' +
+        '<span>| You→Proxy: <strong>' +
         escapeHtml(fmtMs(cell.playerToProxyMs)) +
-        '</strong> + ' + proxyTargetLbl + ': <strong>' +
+        '</strong> + Proxy→Target: <strong>' +
         escapeHtml(fmtMs(cell.proxyToTargetMs)) +
         (cell.isReverseFallback ? ' ~' : '') +
         '</strong>' + revNoteHtml + ' = <strong>' +
@@ -891,11 +660,10 @@
     }
 
     if (cell.kind === 'rescued') {
-      var targetLbl2 = state.lang === 'pl' ? 'Cel' : 'Target';
       els.cellInspector.innerHTML =
         '<span>Proxy: <strong>' +
         escapeHtml(pSrv.label) +
-        '</strong>' + renderOnlyPingBadge(pSrv) + ' → ' + targetLbl2 + ': <strong>' +
+        '</strong>' + renderOnlyPingBadge(pSrv) + ' → Target: <strong>' +
         escapeHtml(tSrv.label) +
         '</strong>' + renderOnlyPingBadge(tSrv) + '</span>' +
         '<span class="badge badge-rescued">' +
@@ -909,11 +677,10 @@
     }
 
     if (cell.kind === 'no_direct') {
-      var targetLbl3 = state.lang === 'pl' ? 'Cel' : 'Target';
       els.cellInspector.innerHTML =
         '<span>Proxy: <strong>' +
         escapeHtml(pSrv.label) +
-        '</strong>' + renderOnlyPingBadge(pSrv) + ' → ' + targetLbl3 + ': <strong>' +
+        '</strong>' + renderOnlyPingBadge(pSrv) + ' → Target: <strong>' +
         escapeHtml(tSrv.label) +
         '</strong>' + renderOnlyPingBadge(tSrv) + '</span>' +
         '<span>| <strong>' +
@@ -927,8 +694,6 @@
     var unavailableReason = t('noMeasurement');
     if (pSrv.onlyPing && tSrv.onlyPing) {
       unavailableReason = t('bothOnlyPingUnavailable');
-    } else if (pSrv.onlyPing && !state.allowReverseFallback && cell.proxyToTargetMs == null) {
-      unavailableReason = t('onlyPingReverseDisabled');
     }
 
     els.cellInspector.innerHTML =
@@ -995,8 +760,7 @@
   els.btnPasteClipboard.addEventListener('click', function () {
     if (!navigator.clipboard || !navigator.clipboard.readText) {
       els.playerInput.focus();
-      els.playerParseStatus.textContent =
-        state.lang === 'pl' ? 'Użyj Ctrl+V w polu tekstowym powyżej.' : 'Press Ctrl+V in the text box above.';
+      els.playerParseStatus.textContent = 'Press Ctrl+V in the text box above.';
       els.playerParseStatus.className = 'parse-status muted';
       return;
     }
@@ -1008,10 +772,7 @@
       })
       .catch(function () {
         els.playerInput.focus();
-        els.playerParseStatus.textContent =
-          state.lang === 'pl'
-            ? 'Brak dostępu do schowka — wklej ręcznie (Ctrl+V).'
-            : 'Clipboard access denied — please paste manually (Ctrl+V).';
+        els.playerParseStatus.textContent = 'Clipboard access denied — please paste manually (Ctrl+V).';
         els.playerParseStatus.className = 'parse-status err';
       });
   });
@@ -1068,13 +829,8 @@
 
   els.btnCopySummary.addEventListener('click', function () {
     if (!state.serverData || !hasPlayerPings()) return;
-    var summary = PA.summarizeByTarget(state.serverData, state.playerPings, {
-      metric: state.metric,
-      thresholdMs: state.thresholdMs,
-      allowReverseFallback: state.allowReverseFallback,
-      allowOnlyPingAsProxy: state.allowOnlyPingAsProxy,
-    });
-    var lines = ['Proxy Ping Summary (' + state.metric + ', threshold >= ' + state.thresholdMs + 'ms):'];
+    var summary = PA.summarizeByTarget(state.serverData, state.playerPings, matrixOptions());
+    var lines = ['Proxy Ping Summary (' + MATRIX_METRIC + ', threshold >= ' + MATRIX_THRESHOLD_MS + 'ms):'];
     summary.rows.forEach(function (r) {
       var d = r.directMs != null ? r.directMs + 'ms' : 'timeout';
       var tLabel = r.target.label + (r.target.onlyPing ? ' [onlyping]' : '');
@@ -1107,52 +863,19 @@
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(txt);
       var orig = els.btnCopySummary.textContent;
-      els.btnCopySummary.textContent = state.lang === 'pl' ? 'Skopiowano!' : 'Copied!';
+      els.btnCopySummary.textContent = 'Copied!';
       setTimeout(function () {
         els.btnCopySummary.textContent = orig;
       }, 1500);
     }
   });
 
-  // Matrix controls
-  els.viewModeSelect.addEventListener('change', function () {
-    state.viewMode = els.viewModeSelect.value;
-    renderAnalysis();
-  });
-  els.metricSelect.addEventListener('change', function () {
-    state.metric = els.metricSelect.value;
-    renderDirectPingsEditor();
-    renderAnalysis();
-  });
-  els.thresholdSelect.addEventListener('change', function () {
-    state.thresholdMs = parseInt(els.thresholdSelect.value, 10) || 5;
-    renderAnalysis();
-  });
-  els.filterRowInput.addEventListener('input', function () {
-    state.filterRow = els.filterRowInput.value;
-    renderAnalysis();
-  });
-  els.filterColInput.addEventListener('input', function () {
-    state.filterCol = els.filterColInput.value;
-    renderAnalysis();
-  });
-  els.chkOnlyProfitable.addEventListener('change', function () {
-    state.onlyProfitable = els.chkOnlyProfitable.checked;
-    renderAnalysis();
-  });
-  els.chkReverseFallback.addEventListener('change', function () {
-    state.allowReverseFallback = els.chkReverseFallback.checked;
-    renderAnalysis();
-  });
-  if (els.chkOnlyPingAsProxy) {
-    els.chkOnlyPingAsProxy.addEventListener('change', function () {
-      state.allowOnlyPingAsProxy = els.chkOnlyPingAsProxy.checked;
-      renderAnalysis();
-    });
-  }
-  els.btnSwapAxes.addEventListener('click', function () {
-    state.swapAxes = !state.swapAxes;
-    renderAnalysis();
+  els.btnToggleSummary.addEventListener('click', function () {
+    var open = els.summaryDetails.classList.contains('hidden');
+    els.summaryDetails.classList.toggle('hidden', !open);
+    els.summarySection.classList.toggle('is-open', open);
+    els.btnToggleSummary.setAttribute('aria-expanded', open ? 'true' : 'false');
+    els.btnToggleSummary.title = open ? 'Hide details' : 'Show details';
   });
 
   els.matrixTable.addEventListener('mouseover', function (e) {
@@ -1172,14 +895,6 @@
     if (rowHdr) rowHdr.classList.add('hover-hdr');
 
     updateInspector(proxyIp, targetIp);
-  });
-
-  // Language switcher
-  els.btnToggleLang.addEventListener('click', function () {
-    state.lang = state.lang === 'pl' ? 'en' : 'pl';
-    applyLanguage();
-    updateDatasetStatus();
-    renderAnalysis();
   });
 
   // Server JSON Modal
@@ -1313,10 +1028,7 @@
         els.serverModalError.textContent = '';
         els.serverJsonPaste.value = text;
         if (notify) {
-          showToast(
-            (state.lang === 'pl' ? 'Wczytano do podglądu: ' : 'Loaded into editor: ') + fileName,
-            'ok'
-          );
+          showToast('Loaded into editor: ' + fileName, 'ok');
         }
       },
       function (errMsg) {

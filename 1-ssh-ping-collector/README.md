@@ -16,9 +16,11 @@ The CSV file uses `country,datacenter,IP,linux user` columns (header row is opti
 country,datacenter,IP,linux user
 PL,OVH,1.2.3.4,root
 USA,Hetzner,2.3.4.5,ubuntu
+BR,LookingGlass,5.6.7.8,onlyping
 ```
 
-Optionally, you can specify a custom SSH port as `1.2.3.4:2222` or in a 5th column.
+- Use `onlyping` as the `linux user` for servers/IPs you do **not** have SSH access to (e.g. a provider test IP / Looking Glass or an external server). `collect_pings.py` will skip SSH for those entries, ping them from all SSH-accessible servers, mark them as `sshStatus: "onlyping"` in `server-pings.json`, and still include them in `2-player-ping-tool/` (`servers.txt`, `.bat`, `.php`) so players ping them too.
+- Optionally, you can specify a custom SSH port as `1.2.3.4:2222` or in a 5th column.
 
 ## Basic Usage
 

@@ -37,14 +37,17 @@
         if (!label) {
           label = [country, datacenter].filter(Boolean).join(' · ') || ip;
         }
+        var sshStatus = String(s.sshStatus || 'ok').trim();
+        var onlyPing = Boolean(s.onlyPing) || sshStatus.toLowerCase() === 'onlyping';
         return {
           id: String(s.id || ip).trim(),
           ip: ip,
           country: country,
           datacenter: datacenter,
           label: label,
-          sshStatus: s.sshStatus || 'ok',
+          sshStatus: sshStatus,
           sshError: s.sshError || null,
+          onlyPing: onlyPing,
         };
       });
 
@@ -402,6 +405,7 @@
     var opts = options || {};
     var metric = normalizeMetricName(opts.metric);
     var threshold = isFiniteNum(opts.thresholdMs) ? opts.thresholdMs : 5;
+    var allowOnlyPingAsProxy = opts.allowOnlyPingAsProxy !== false;
     var servers = serverData.servers || [];
     var hasPlayer = Boolean(playerPings && Object.keys(playerPings).length > 0);
 
@@ -428,6 +432,7 @@
       var candidates = [];
       servers.forEach(function (proxy) {
         if (proxy.ip === target.ip) return;
+        if (!allowOnlyPingAsProxy && proxy.onlyPing) return;
         var cell = evaluateCell(serverData, playerPings, proxy.ip, target.ip, opts);
         if (cell.kind === 'compared' || cell.kind === 'rescued' || cell.kind === 'no_direct') {
           candidates.push({

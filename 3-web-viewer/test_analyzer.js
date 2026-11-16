@@ -126,4 +126,80 @@ const medCell = analyzer.evaluateCell(
 assert.strictEqual(medCell.totalViaProxyMs, 28);
 assert.strictEqual(medCell.deltaMs, -4);
 
+// 8. onlyping server support (pinged from SSH servers + player, evaluated as proxy via reverse fallback & as target)
+const onlyPingData = analyzer.normalizeServerData({
+  servers: [
+    { ip: '10.0.0.1', country: 'PL', datacenter: 'OVH', sshStatus: 'ok' },
+    { ip: '10.0.0.2', country: 'US', datacenter: 'OVH', sshStatus: 'ok' },
+    { ip: '20.0.0.1', country: 'BR', datacenter: 'TestLG', sshStatus: 'onlyping' },
+    { ip: '20.0.0.2', country: 'SG', datacenter: 'TestLG', onlyPing: true, sshStatus: 'onlyping' },
+  ],
+  matrix: {
+    '10.0.0.1': {
+      '10.0.0.2': { avg: 108, min: 107, max: 109, loss: 0 },
+      '20.0.0.1': { avg: 215, min: 214, max: 216, loss: 0 },
+      '20.0.0.2': { avg: 180, min: 179, max: 181, loss: 0 },
+    },
+    '10.0.0.2': {
+      '10.0.0.1': { avg: 108, min: 107, max: 109, loss: 0 },
+      '20.0.0.1': { avg: 120, min: 119, max: 121, loss: 0 },
+      '20.0.0.2': { avg: 230, min: 229, max: 231, loss: 0 },
+    },
+    '20.0.0.1': {},
+    '20.0.0.2': {},
+  },
+});
+assert.strictEqual(onlyPingData.servers[0].onlyPing, false);
+assert.strictEqual(onlyPingData.servers[2].onlyPing, true);
+assert.strictEqual(onlyPingData.servers[3].onlyPing, true);
+
+const opPlayerPings = {
+  '10.0.0.1': { avg: 255, min: 253, max: 257, loss: 0 },
+  '10.0.0.2': { avg: 145, min: 144, max: 146, loss: 0 },
+  '20.0.0.1': { avg: 18, min: 17, max: 19, loss: 0 },
+  '20.0.0.2': { avg: 340, min: 338, max: 342, loss: 0 },
+};
+
+// Using onlyping 20.0.0.1 as proxy for PL 10.0.0.1: 18 + 215 (reverse) = 233 vs 255 direct => -22ms!
+const opAsProxyCell = analyzer.evaluateCell(onlyPingData, opPlayerPings, '20.0.0.1', '10.0.0.1', {
+  metric: 'avg',
+  thresholdMs: 5,
+  allowReverseFallback: true,
+});
+assert.strictEqual(opAsProxyCell.kind, 'compared');
+assert.strictEqual(opAsProxyCell.isReverseFallback, true);
+assert.strictEqual(opAsProxyCell.totalViaProxyMs, 233);
+assert.strictEqual(opAsProxyCell.deltaMs, -22);
+assert.strictEqual(opAsProxyCell.improves, true);
+
+// Two onlyping servers cannot measure each other
+const opToOpCell = analyzer.evaluateCell(onlyPingData, opPlayerPings, '20.0.0.1', '20.0.0.2', {
+  allowReverseFallback: true,
+});
+assert.strictEqual(opToOpCell.kind, 'unavailable');
+
+// With allowOnlyPingAsProxy=true (default), 20.0.0.1 is chosen as best proxy for 10.0.0.1 (233ms < 253ms via 10.0.0.2)
+const opSumEnabled = analyzer.summarizeByTarget(onlyPingData, opPlayerPings, {
+  thresholdMs: 5,
+  allowReverseFallback: true,
+  allowOnlyPingAsProxy: true,
+});
+const plTargetEnabled = opSumEnabled.rows.find((r) => r.target.ip === '10.0.0.1');
+assert.strictEqual(plTargetEnabled.best.proxy.ip, '20.0.0.1');
+assert.strictEqual(plTargetEnabled.best.cell.deltaMs, -22);
+
+// With allowOnlyPingAsProxy=false, only SSH server 10.0.0.2 is considered as proxy for 10.0.0.1
+const opSumDisabled = analyzer.summarizeByTarget(onlyPingData, opPlayerPings, {
+  thresholdMs: 5,
+  allowReverseFallback: true,
+  allowOnlyPingAsProxy: false,
+});
+const plTargetDisabled = opSumDisabled.rows.find((r) => r.target.ip === '10.0.0.1');
+assert.strictEqual(plTargetDisabled.best.proxy.ip, '10.0.0.2');
+assert.strictEqual(plTargetDisabled.best.cell.totalViaProxyMs, 253);
+
+// onlyping as target still finds SSH proxy (10.0.0.1 -> 20.0.0.2: 255 + 180 = 435 vs 340 direct => direct is best; 10.0.0.2 -> 20.0.0.1: 145 + 120 = 265 vs 18 direct)
+const sgTargetDisabled = opSumDisabled.rows.find((r) => r.target.ip === '20.0.0.2');
+assert.strictEqual(sgTargetDisabled.target.onlyPing, true);
+
 console.log('ALL ANALYZER TESTS PASSED');

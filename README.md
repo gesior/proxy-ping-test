@@ -15,7 +15,9 @@ This suite helps you test whether routing a player's traffic through proxy serve
    country,datacenter,IP,linux user
    PL,OVH,1.2.3.4,root
    USA,Hetzner,2.3.4.5,ubuntu
+   BR,LookingGlass,5.6.7.8,onlyping
    ```
+   Use `onlyping` as `linux user` for servers/IPs you do not have SSH access to — they will not be queried over SSH and will only be pinged from your SSH servers and the player ping tool.
 2. Collect the server-to-server ping matrix and sync the server list to the player tool and web viewer:
    ```bash
    python 1-ssh-ping-collector/collect_pings.py \

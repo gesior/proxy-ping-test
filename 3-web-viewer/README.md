@@ -17,7 +17,7 @@ Static web application (pure HTML + CSS + JS, no backend or build step) that can
 4. **Every-to-every matrix (`Proxy × Target`)**:
    - Sticky top and left headers for navigating large server lists.
    - Multiple cell display modes (full breakdown, `+/- ms` delta only, total via proxy, server↔server only).
-   - Row/column filters, gain threshold (`1/5/10/20 ms`), metric selector (`avg` / `median` / `min`), axis swap, and reverse-direction fallback when one direction is missing.
+   - Row/column filters, gain threshold (`1/5/10/20 ms`), metric selector (`avg` / `median` / `min`), axis swap, reverse-direction fallback (`Target→Proxy`) when one direction is missing, and `onlyping` badge/toggle for ping-only IPs without SSH access.
    - Built-in `EN / PL` language switcher (English by default).
 
 ## JS Logic Tests

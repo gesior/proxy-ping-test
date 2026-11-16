@@ -52,6 +52,13 @@
       filterColLabel: 'Filtruj kolumny (Cel)',
       onlyProfitable: 'Tylko opłacalne proxy',
       reverseFallback: 'Użyj odwrotnego (Cel→Proxy), gdy brak Proxy→Cel',
+      onlyPingAsProxy: 'Testuj serwery onlyping jako proxy',
+      onlyPingTooltip: 'Serwer bez dostępu SSH (onlyping) — pingowany z serwerów SSH i od gracza; jako proxy używa odwrotnego pomiaru Cel→Proxy (~)',
+      reverseOnlyPingNote: 'onlyping: użyto pomiaru Cel→Proxy',
+      reverseFallbackNote: 'kierunek odwrotny Cel→Proxy',
+      bothOnlyPingUnavailable: 'oba serwery onlyping — brak pomiaru S2S między nimi',
+      onlyPingReverseDisabled: 'onlyping — włącz „Użyj odwrotnego (Cel→Proxy)”, aby przetestować jako proxy',
+      noMeasurement: 'brak pomiaru',
       swapAxesBtn: 'Zamień osie',
       inspectorDefault:
         'Najedź na dowolną komórkę w tabeli, aby zobaczyć dokładne wyliczenie ścieżki.',
@@ -123,6 +130,13 @@
       filterColLabel: 'Filter columns',
       onlyProfitable: 'Only beneficial proxies',
       reverseFallback: 'Use reverse (Target→Proxy) if Proxy→Target missing',
+      onlyPingAsProxy: 'Test onlyping servers as proxies',
+      onlyPingTooltip: 'Server without SSH access (onlyping) — pinged from SSH servers and player; as a proxy uses reverse Target→Proxy estimate (~)',
+      reverseOnlyPingNote: 'onlyping: estimated from Target→Proxy',
+      reverseFallbackNote: 'reverse Target→Proxy',
+      bothOnlyPingUnavailable: 'both servers are onlyping — no S2S measurement between them',
+      onlyPingReverseDisabled: 'onlyping — enable "Use reverse (Target→Proxy)" to test as proxy',
+      noMeasurement: 'no measurement',
       swapAxesBtn: 'Swap axes',
       inspectorDefault: 'Hover any cell in the matrix to inspect the exact path calculation.',
       legBest: '★ Best proxy for target',
@@ -158,6 +172,7 @@
     filterCol: '',
     onlyProfitable: false,
     allowReverseFallback: true,
+    allowOnlyPingAsProxy: true,
     swapAxes: false,
     highlightedTargetIp: null,
   };
@@ -185,6 +200,8 @@
     filterColInput: document.getElementById('filterColInput'),
     chkOnlyProfitable: document.getElementById('chkOnlyProfitable'),
     chkReverseFallback: document.getElementById('chkReverseFallback'),
+    onlyPingProxyWrap: document.getElementById('onlyPingProxyWrap'),
+    chkOnlyPingAsProxy: document.getElementById('chkOnlyPingAsProxy'),
     btnSwapAxes: document.getElementById('btnSwapAxes'),
     cellInspector: document.getElementById('cellInspector'),
     matrixTable: document.getElementById('matrixTable'),
@@ -248,6 +265,27 @@
     return Boolean(state.playerPings && Object.keys(state.playerPings).length > 0);
   }
 
+  function renderOnlyPingBadge(srv) {
+    if (!srv || !srv.onlyPing) return '';
+    return '<span class="badge-onlyping" title="' + escapeHtml(t('onlyPingTooltip')) + '">onlyping</span>';
+  }
+
+  function updateDatasetStatus() {
+    if (!state.serverData) return;
+    var srvCount = state.serverData.servers.length;
+    var onlyPingCount = state.serverData.servers.filter(function (s) {
+      return s.onlyPing;
+    }).length;
+    var gen = state.serverData.generatedAt
+      ? state.serverData.generatedAt.replace('T', ' ').replace('Z', ' UTC')
+      : '';
+    var countText = srvCount + (onlyPingCount > 0 ? ' (' + onlyPingCount + ' onlyping)' : '');
+    els.datasetStatus.textContent =
+      (state.lang === 'pl' ? 'Serwery: ' : 'Servers: ') +
+      countText +
+      (gen ? ' · ' + gen : '');
+  }
+
   function setServerData(raw) {
     state.serverData = PA.normalizeServerData(raw);
     var demoPresetsEl = document.querySelector('.demo-presets');
@@ -259,14 +297,14 @@
       if (demoPresetsEl) demoPresetsEl.classList.add('hidden');
     }
 
-    var srvCount = state.serverData.servers.length;
-    var gen = state.serverData.generatedAt
-      ? state.serverData.generatedAt.replace('T', ' ').replace('Z', ' UTC')
-      : '';
-    els.datasetStatus.textContent =
-      (state.lang === 'pl' ? 'Serwery: ' : 'Servers: ') +
-      srvCount +
-      (gen ? ' · ' + gen : '');
+    var hasOnlyPing = state.serverData.servers.some(function (s) {
+      return s.onlyPing;
+    });
+    if (els.onlyPingProxyWrap) {
+      els.onlyPingProxyWrap.classList.toggle('hidden', !hasOnlyPing);
+    }
+
+    updateDatasetStatus();
 
     if (els.playerInput.value.trim()) {
       parseAndApplyPlayerText(els.playerInput.value);
@@ -349,7 +387,7 @@
         return (
           '<div class="direct-ping-chip">' +
           '  <div class="srv-name" title="' + escapeHtml(srv.label) + '">' + escapeHtml(srv.label) + '</div>' +
-          '  <div class="srv-ip">' + escapeHtml(srv.ip) + '</div>' +
+          '  <div class="srv-ip">' + escapeHtml(srv.ip) + renderOnlyPingBadge(srv) + '</div>' +
           '  <div class="chip-input-row">' +
           '    <input type="number" min="0" step="0.1" data-manual-ip="' + escapeHtml(srv.ip) + '" value="' + escapeHtml(val) + '" placeholder="ms" />' +
           '    <span class="muted small">ms</span>' +
@@ -370,6 +408,7 @@
       metric: state.metric,
       thresholdMs: state.thresholdMs,
       allowReverseFallback: state.allowReverseFallback,
+      allowOnlyPingAsProxy: state.allowOnlyPingAsProxy,
     });
 
     if (hasPlayer) {
@@ -442,7 +481,7 @@
 
         if (row.best) {
           var b = row.best;
-          bestCellHtml = '<strong>★ ' + escapeHtml(b.proxy.label) + '</strong>';
+          bestCellHtml = '<strong>★ ' + escapeHtml(b.proxy.label) + '</strong>' + renderOnlyPingBadge(b.proxy);
           var revMark = b.cell.isReverseFallback ? ' ~' : '';
           routeHtml =
             escapeHtml(fmtMs(b.cell.playerToProxyMs)) +
@@ -472,13 +511,13 @@
           .slice(row.best ? 1 : 0, 3)
           .map(function (alt) {
             var d = alt.cell.kind === 'rescued' ? t('rescuedWord') : fmtSignedMs(alt.cell.deltaMs);
-            return escapeHtml(alt.proxy.label) + ' (' + escapeHtml(d) + ')';
+            return escapeHtml(alt.proxy.label) + renderOnlyPingBadge(alt.proxy) + ' (' + escapeHtml(d) + ')';
           })
           .join(' · ');
 
         return (
           '<tr data-target-ip="' + escapeHtml(row.target.ip) + '">' +
-          '  <td><strong>' + escapeHtml(row.target.label) + '</strong> <span class="hdr-ip">' + escapeHtml(row.target.ip) + '</span></td>' +
+          '  <td><strong>' + escapeHtml(row.target.label) + '</strong>' + renderOnlyPingBadge(row.target) + ' <span class="hdr-ip">' + escapeHtml(row.target.ip) + '</span></td>' +
           '  <td>' + directBadge + '</td>' +
           '  <td>' + bestCellHtml + '</td>' +
           '  <td>' + routeHtml + '</td>' +
@@ -500,7 +539,8 @@
       srv.label.toLowerCase().indexOf(q) !== -1 ||
       srv.country.toLowerCase().indexOf(q) !== -1 ||
       srv.datacenter.toLowerCase().indexOf(q) !== -1 ||
-      srv.ip.toLowerCase().indexOf(q) !== -1
+      srv.ip.toLowerCase().indexOf(q) !== -1 ||
+      (srv.onlyPing && 'onlyping'.indexOf(q) !== -1)
     );
   }
 
@@ -518,6 +558,7 @@
 
     var rowServers = servers.filter(function (s) {
       if (!serverMatchesFilter(s, rowQuery)) return false;
+      if (!state.swapAxes && !state.allowOnlyPingAsProxy && s.onlyPing) return false;
       if (!state.swapAxes && state.onlyProfitable && hasPlayer) {
         return Boolean(profitableSet[s.ip]);
       }
@@ -526,6 +567,7 @@
 
     var colServers = servers.filter(function (s) {
       if (!serverMatchesFilter(s, colQuery)) return false;
+      if (state.swapAxes && !state.allowOnlyPingAsProxy && s.onlyPing) return false;
       if (state.swapAxes && state.onlyProfitable && hasPlayer) {
         return Boolean(profitableSet[s.ip]);
       }
@@ -558,7 +600,7 @@
         !state.swapAxes && state.highlightedTargetIp === colSrv.ip ? ' col-highlighted' : '';
       theadHtml +=
         '<th class="' + hlClass + '" data-col-ip="' + escapeHtml(colSrv.ip) + '">' +
-        '  <div class="hdr-title">' + escapeHtml(colSrv.label) + '</div>' +
+        '  <div class="hdr-title">' + escapeHtml(colSrv.label) + renderOnlyPingBadge(colSrv) + '</div>' +
         '  <div class="hdr-ip">' + escapeHtml(colSrv.ip) + '</div>' +
         pingTag +
         '</th>';
@@ -587,7 +629,7 @@
       tbodyHtml += '<tr>';
       tbodyHtml +=
         '<th class="row-header" data-row-ip="' + escapeHtml(rowSrv.ip) + '">' +
-        '  <div class="hdr-title">' + escapeHtml(rowSrv.label) + '</div>' +
+        '  <div class="hdr-title">' + escapeHtml(rowSrv.label) + renderOnlyPingBadge(rowSrv) + '</div>' +
         '  <div class="hdr-ip">' + escapeHtml(rowSrv.ip) + '</div>' +
         rowTag +
         '</th>';
@@ -747,24 +789,28 @@
       els.cellInspector.innerHTML =
         '<strong>' +
         escapeHtml(tSrv.label) +
-        '</strong> — ' +
+        '</strong>' + renderOnlyPingBadge(tSrv) + ' — ' +
         escapeHtml(t('directWord')) +
         (cell.directToTargetMs != null ? ': <strong>' + escapeHtml(fmtMs(cell.directToTargetMs)) + '</strong>' : '');
       return;
     }
 
+    var revNoteHtml = cell.isReverseFallback
+      ? ' <span class="muted">(' +
+        escapeHtml(pSrv.onlyPing ? t('reverseOnlyPingNote') : t('reverseFallbackNote')) +
+        ')</span>'
+      : '';
+
     if (cell.kind === 's2s_only') {
       els.cellInspector.innerHTML =
         '<strong>' +
         escapeHtml(pSrv.label) +
-        ' → ' +
+        '</strong>' + renderOnlyPingBadge(pSrv) + ' → <strong>' +
         escapeHtml(tSrv.label) +
-        '</strong>: <strong>' +
+        '</strong>' + renderOnlyPingBadge(tSrv) + ': <strong>' +
         escapeHtml(fmtMs(cell.proxyToTargetMs)) +
         '</strong>' +
-        (cell.isReverseFallback
-          ? ' <span class="muted">(' + (state.lang === 'pl' ? 'kierunek odwrotny' : 'reverse direction') + ')</span>'
-          : '') +
+        revNoteHtml +
         (cell.proxyToTargetLoss != null ? ' · loss: ' + escapeHtml(cell.proxyToTargetLoss) + '%' : '');
       return;
     }
@@ -777,15 +823,15 @@
       els.cellInspector.innerHTML =
         '<span>Proxy: <strong>' +
         escapeHtml(pSrv.label) +
-        '</strong> → ' + targetLbl + ': <strong>' +
+        '</strong>' + renderOnlyPingBadge(pSrv) + ' → ' + targetLbl + ': <strong>' +
         escapeHtml(tSrv.label) +
-        '</strong></span>' +
+        '</strong>' + renderOnlyPingBadge(tSrv) + '</span>' +
         '<span>| ' + youProxyLbl + ': <strong>' +
         escapeHtml(fmtMs(cell.playerToProxyMs)) +
         '</strong> + ' + proxyTargetLbl + ': <strong>' +
         escapeHtml(fmtMs(cell.proxyToTargetMs)) +
         (cell.isReverseFallback ? ' ~' : '') +
-        '</strong> = <strong>' +
+        '</strong>' + revNoteHtml + ' = <strong>' +
         escapeHtml(fmtMs(cell.totalViaProxyMs)) +
         '</strong></span>' +
         '<span>| ' +
@@ -808,24 +854,51 @@
       els.cellInspector.innerHTML =
         '<span>Proxy: <strong>' +
         escapeHtml(pSrv.label) +
-        '</strong> → ' + targetLbl2 + ': <strong>' +
+        '</strong>' + renderOnlyPingBadge(pSrv) + ' → ' + targetLbl2 + ': <strong>' +
         escapeHtml(tSrv.label) +
-        '</strong></span>' +
+        '</strong>' + renderOnlyPingBadge(tSrv) + '</span>' +
         '<span class="badge badge-rescued">' +
         escapeHtml(t('rescuedWord')) +
         ': ' +
         escapeHtml(fmtMs(cell.totalViaProxyMs)) +
+        (cell.isReverseFallback ? ' ~' : '') +
+        '</span>' +
+        revNoteHtml;
+      return;
+    }
+
+    if (cell.kind === 'no_direct') {
+      var targetLbl3 = state.lang === 'pl' ? 'Cel' : 'Target';
+      els.cellInspector.innerHTML =
+        '<span>Proxy: <strong>' +
+        escapeHtml(pSrv.label) +
+        '</strong>' + renderOnlyPingBadge(pSrv) + ' → ' + targetLbl3 + ': <strong>' +
+        escapeHtml(tSrv.label) +
+        '</strong>' + renderOnlyPingBadge(tSrv) + '</span>' +
+        '<span>| <strong>' +
+        escapeHtml(fmtMs(cell.totalViaProxyMs)) +
+        '</strong>' +
+        revNoteHtml +
         '</span>';
       return;
+    }
+
+    var unavailableReason = t('noMeasurement');
+    if (pSrv.onlyPing && tSrv.onlyPing) {
+      unavailableReason = t('bothOnlyPingUnavailable');
+    } else if (pSrv.onlyPing && !state.allowReverseFallback && cell.proxyToTargetMs == null) {
+      unavailableReason = t('onlyPingReverseDisabled');
     }
 
     els.cellInspector.innerHTML =
       '<span>' +
       escapeHtml(pSrv.label) +
+      renderOnlyPingBadge(pSrv) +
       ' → ' +
       escapeHtml(tSrv.label) +
+      renderOnlyPingBadge(tSrv) +
       ': <span class="muted">' +
-      (state.lang === 'pl' ? 'brak pomiaru' : 'no measurement') +
+      escapeHtml(unavailableReason) +
       '</span></span>';
   }
 
@@ -963,29 +1036,35 @@
       metric: state.metric,
       thresholdMs: state.thresholdMs,
       allowReverseFallback: state.allowReverseFallback,
+      allowOnlyPingAsProxy: state.allowOnlyPingAsProxy,
     });
     var lines = ['Proxy Ping Summary (' + state.metric + ', threshold >= ' + state.thresholdMs + 'ms):'];
     summary.rows.forEach(function (r) {
       var d = r.directMs != null ? r.directMs + 'ms' : 'timeout';
+      var tLabel = r.target.label + (r.target.onlyPing ? ' [onlyping]' : '');
       if (r.best) {
+        var pLabel = r.best.proxy.label + (r.best.proxy.onlyPing ? ' [onlyping]' : '');
         var delta = r.best.cell.kind === 'rescued' ? 'RESCUED' : fmtSignedMs(r.best.cell.deltaMs);
+        var tilde = r.best.cell.isReverseFallback ? ' ~' : '';
         lines.push(
           '- ' +
-            r.target.label +
+            tLabel +
             ' (' +
             r.target.ip +
             '): direct ' +
             d +
             ' -> via ' +
-            r.best.proxy.label +
+            pLabel +
             ' = ' +
             r.best.cell.totalViaProxyMs +
-            'ms (' +
+            'ms' +
+            tilde +
+            ' (' +
             delta +
             ')'
         );
       } else {
-        lines.push('- ' + r.target.label + ' (' + r.target.ip + '): direct ' + d + ' (best)');
+        lines.push('- ' + tLabel + ' (' + r.target.ip + '): direct ' + d + ' (best)');
       }
     });
     var txt = lines.join('\n');
@@ -1029,6 +1108,12 @@
     state.allowReverseFallback = els.chkReverseFallback.checked;
     renderAnalysis();
   });
+  if (els.chkOnlyPingAsProxy) {
+    els.chkOnlyPingAsProxy.addEventListener('change', function () {
+      state.allowOnlyPingAsProxy = els.chkOnlyPingAsProxy.checked;
+      renderAnalysis();
+    });
+  }
   els.btnSwapAxes.addEventListener('click', function () {
     state.swapAxes = !state.swapAxes;
     renderAnalysis();
@@ -1057,16 +1142,7 @@
   els.btnToggleLang.addEventListener('click', function () {
     state.lang = state.lang === 'pl' ? 'en' : 'pl';
     applyLanguage();
-    if (state.serverData) {
-      var srvCount = state.serverData.servers.length;
-      var gen = state.serverData.generatedAt
-        ? state.serverData.generatedAt.replace('T', ' ').replace('Z', ' UTC')
-        : '';
-      els.datasetStatus.textContent =
-        (state.lang === 'pl' ? 'Serwery: ' : 'Servers: ') +
-        srvCount +
-        (gen ? ' · ' + gen : '');
-    }
+    updateDatasetStatus();
     renderAnalysis();
   });
 

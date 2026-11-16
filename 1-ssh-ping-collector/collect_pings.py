@@ -14,6 +14,10 @@ Input CSV format:
 
 Optional 5th column: ssh_port (or use IP:PORT in the IP column).
 Optional 6th column: custom_label.
+
+Use `onlyping` as `uzytkownik linux` for servers without SSH access — they will
+not be queried over SSH, and will only be pinged from your SSH servers and the
+player ping tool.
 """
 
 from __future__ import annotations
@@ -76,6 +80,11 @@ class ServerEntry:
     ssh_port: int
     label: str
 
+    @property
+    def is_only_ping(self) -> bool:
+        """Return True if this server is ping-only (no SSH access)."""
+        return self.user.strip().lower() == "onlyping"
+
     def to_public_dict(self, ssh_status: str, ssh_error: str | None) -> dict[str, Any]:
         """Return server metadata safe for public consumption (no SSH user/port)."""
         return {
@@ -86,6 +95,7 @@ class ServerEntry:
             "label": self.label,
             "sshStatus": ssh_status,
             "sshError": ssh_error,
+            "onlyPing": self.is_only_ping,
         }
 
 
@@ -808,7 +818,15 @@ def main(argv: list[str] | None = None) -> int:
         print(f"[ERROR] {exc}", file=sys.stderr)
         return 1
 
-    print(f"Loaded {len(servers)} servers from {args.csv}")
+    onlyping_servers = [s for s in servers if s.is_only_ping]
+    ssh_servers = [s for s in servers if not s.is_only_ping]
+    if onlyping_servers:
+        print(
+            f"Loaded {len(servers)} servers from {args.csv} "
+            f"({len(ssh_servers)} SSH, {len(onlyping_servers)} onlyping)"
+        )
+    else:
+        print(f"Loaded {len(servers)} servers from {args.csv}")
 
     if args.sync_player_dir:
         updated = sync_player_tool_dir(servers, args.sync_player_dir)
@@ -827,6 +845,10 @@ def main(argv: list[str] | None = None) -> int:
     only_filter = {x.strip().lower() for x in args.only_from.split(",") if x.strip()}
     sources_to_run: list[ServerEntry] = []
     for srv in servers:
+        if srv.is_only_ping:
+            if only_filter and (srv.ip.lower() in only_filter or srv.country.lower() in only_filter):
+                print(f"[INFO] Skipping '{srv.label}' ({srv.ip}) from --only-from because user is 'onlyping' (no SSH).")
+            continue
         if only_filter and srv.ip.lower() not in only_filter and srv.country.lower() not in only_filter:
             continue
         if args.retry_failed and srv.ip in existing_statuses and existing_statuses[srv.ip][0] == "ok":
@@ -848,6 +870,10 @@ def main(argv: list[str] | None = None) -> int:
                 extra_options=args.ssh_option,
             )
             print("  " + " ".join(shlex.quote(part) for part in cmd))
+        if onlyping_servers:
+            print(f"[DRY-RUN] Ping-only targets (no SSH, user=onlyping): {len(onlyping_servers)}")
+            for srv in onlyping_servers:
+                print(f"  {srv.label} ({srv.ip})")
         return 0
 
     ssh_workers = 1 if args.no_batch_mode else max(1, args.ssh_workers)
@@ -867,6 +893,10 @@ def main(argv: list[str] | None = None) -> int:
     if existing_data:
         valid_ips = {s.ip for s in servers}
         for srv in servers:
+            if srv.is_only_ping:
+                statuses[srv.ip] = ("onlyping", None)
+                matrix[srv.ip] = {}
+                continue
             if srv.ip in existing_matrix:
                 matrix[srv.ip] = {
                     t_ip: val
@@ -881,7 +911,10 @@ def main(argv: list[str] | None = None) -> int:
     completed = 0
 
     if total == 0:
-        print("No servers to query (all skipped by --retry-failed / --only-from).")
+        if not ssh_servers:
+            print("No SSH source servers to query (all servers in CSV are 'onlyping').")
+        else:
+            print("No servers to query (all skipped by --retry-failed / --only-from / onlyping).")
     else:
         print(
             f"Starting measurements: {total} source servers -> {len(servers) - 1} targets each "
@@ -930,7 +963,11 @@ def main(argv: list[str] | None = None) -> int:
 
     public_servers = []
     for srv in servers:
-        st, err = statuses.get(srv.ip, ("skipped", "Not queried in this run"))
+        if srv.is_only_ping:
+            st, err = "onlyping", None
+            matrix.setdefault(srv.ip, {})
+        else:
+            st, err = statuses.get(srv.ip, ("skipped", "Not queried in this run"))
         public_servers.append(srv.to_public_dict(st, err))
 
     payload: dict[str, Any] = {

@@ -102,6 +102,7 @@ function getEmbeddedServers(): array
     ['country' => 'OVH', 'datacenter' => 'Poland', 'ip' => '54.37.128.135'],
     ['country' => 'OVH', 'datacenter' => 'United Kingdom', 'ip' => '57.129.154.151'],
     ['country' => 'OVH', 'datacenter' => 'US-East', 'ip' => '51.81.87.10'],
+    ['country' => 'BR-digital', 'datacenter' => 'Brazil', 'ip' => '201.16.9.3'],
 // === EMBEDDED_SERVERS_END ===
     ];
 }

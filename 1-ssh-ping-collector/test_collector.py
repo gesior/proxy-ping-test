@@ -264,6 +264,211 @@ class TestCollector(unittest.TestCase):
             self.assertEqual(data["matrix"]["1.2.3.4"]["2.3.4.5"]["avg"], 115.0)
             self.assertEqual(data["matrix"]["2.3.4.5"]["1.2.3.4"]["avg"], 115.5)
 
+    def test_onlyping_servers_skipped_for_ssh_but_targeted_and_synced(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            csv_path = tmp_path / "servers.csv"
+            csv_path.write_text(
+                "kraj,centrum danych,IP,uzytkownik linux\n"
+                "PL,OVH,1.2.3.4,root\n"
+                "USA,Hetzner,2.3.4.5,ubuntu\n"
+                "BR,LookingGlass,5.6.7.8,onlyping\n"
+                "SG,TestHost,8.9.10.11,OnlyPing\n",
+                encoding="utf-8",
+            )
+            servers = cp.load_servers_csv(csv_path)
+            self.assertFalse(servers[0].is_only_ping)
+            self.assertFalse(servers[1].is_only_ping)
+            self.assertTrue(servers[2].is_only_ping)
+            self.assertTrue(servers[3].is_only_ping)
+
+            out_json = tmp_path / "out" / "server-pings.json"
+            player_dir = tmp_path / "player"
+            player_dir.mkdir()
+            (player_dir / "ping-servers.bat").write_text(
+                "@echo off\n"
+                ":: === EMBEDDED_SERVERS_START ===\n"
+                ":: === EMBEDDED_SERVERS_END ===\n",
+                encoding="utf-8",
+            )
+            (player_dir / "ping-servers.php").write_text(
+                "<?php\n$servers = [\n"
+                "// === EMBEDDED_SERVERS_START ===\n"
+                "// === EMBEDDED_SERVERS_END ===\n"
+                "];\n",
+                encoding="utf-8",
+            )
+
+            called_hosts: list[str] = []
+
+            def fake_run(cmd, input=None, **kwargs):
+                host_arg = cmd[-2]
+                called_hosts.append(host_arg)
+                script_text = input.decode("utf-8")
+                self.assertIn("5.6.7.8", script_text)
+                self.assertIn("8.9.10.11", script_text)
+                if host_arg == "root@1.2.3.4":
+                    stdout = (
+                        b"__PING_BEGIN__ 2.3.4.5 0\n"
+                        b"5 packets transmitted, 5 received, 0% packet loss, time 800ms\n"
+                        b"rtt min/avg/max/mdev = 110.0/112.0/114.0/1.0 ms\n"
+                        b"__PING_END__ 2.3.4.5\n"
+                        b"__PING_BEGIN__ 5.6.7.8 0\n"
+                        b"5 packets transmitted, 5 received, 0% packet loss, time 800ms\n"
+                        b"rtt min/avg/max/mdev = 210.0/212.0/214.0/1.0 ms\n"
+                        b"__PING_END__ 5.6.7.8\n"
+                        b"__PING_BEGIN__ 8.9.10.11 0\n"
+                        b"5 packets transmitted, 5 received, 0% packet loss, time 800ms\n"
+                        b"rtt min/avg/max/mdev = 180.0/182.0/184.0/1.0 ms\n"
+                        b"__PING_END__ 8.9.10.11\n"
+                    )
+                else:
+                    stdout = (
+                        b"__PING_BEGIN__ 1.2.3.4 0\n"
+                        b"5 packets transmitted, 5 received, 0% packet loss, time 800ms\n"
+                        b"rtt min/avg/max/mdev = 111.0/113.0/115.0/1.0 ms\n"
+                        b"__PING_END__ 1.2.3.4\n"
+                        b"__PING_BEGIN__ 5.6.7.8 0\n"
+                        b"5 packets transmitted, 5 received, 0% packet loss, time 800ms\n"
+                        b"rtt min/avg/max/mdev = 120.0/122.0/124.0/1.0 ms\n"
+                        b"__PING_END__ 5.6.7.8\n"
+                        b"__PING_BEGIN__ 8.9.10.11 0\n"
+                        b"5 packets transmitted, 5 received, 0% packet loss, time 800ms\n"
+                        b"rtt min/avg/max/mdev = 230.0/232.0/234.0/1.0 ms\n"
+                        b"__PING_END__ 8.9.10.11\n"
+                    )
+                return mock.Mock(returncode=0, stdout=stdout, stderr=b"")
+
+            with mock.patch("subprocess.run", side_effect=fake_run):
+                rc = cp.main(
+                    [
+                        "--csv",
+                        str(csv_path),
+                        "--out",
+                        str(out_json),
+                        "--sync-player-dir",
+                        str(player_dir),
+                    ]
+                )
+            self.assertEqual(rc, 0)
+            self.assertEqual(sorted(called_hosts), ["root@1.2.3.4", "ubuntu@2.3.4.5"])
+
+            data = json.loads(out_json.read_text(encoding="utf-8"))
+            by_ip = {s["ip"]: s for s in data["servers"]}
+            self.assertEqual(by_ip["1.2.3.4"]["sshStatus"], "ok")
+            self.assertFalse(by_ip["1.2.3.4"]["onlyPing"])
+            self.assertEqual(by_ip["5.6.7.8"]["sshStatus"], "onlyping")
+            self.assertIsNone(by_ip["5.6.7.8"]["sshError"])
+            self.assertTrue(by_ip["5.6.7.8"]["onlyPing"])
+            self.assertEqual(by_ip["8.9.10.11"]["sshStatus"], "onlyping")
+            self.assertTrue(by_ip["8.9.10.11"]["onlyPing"])
+
+            self.assertEqual(data["matrix"]["1.2.3.4"]["5.6.7.8"]["avg"], 212.0)
+            self.assertEqual(data["matrix"]["2.3.4.5"]["5.6.7.8"]["avg"], 122.0)
+            self.assertEqual(data["matrix"]["5.6.7.8"], {})
+            self.assertEqual(data["matrix"]["8.9.10.11"], {})
+
+            txt_text = (player_dir / "servers.txt").read_text(encoding="utf-8")
+            self.assertIn("BR,LookingGlass,5.6.7.8", txt_text)
+            self.assertIn("SG,TestHost,8.9.10.11", txt_text)
+            self.assertNotIn("onlyping", txt_text.lower())
+            bat_text = (player_dir / "ping-servers.bat").read_text(encoding="utf-8")
+            self.assertIn('call :add_server "BR" "LookingGlass" "5.6.7.8"', bat_text)
+            php_text = (player_dir / "ping-servers.php").read_text(encoding="utf-8")
+            self.assertIn("'ip' => '5.6.7.8'", php_text)
+
+    def test_onlyping_merge_retry_and_dry_run(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            csv_path = tmp_path / "servers.csv"
+            csv_path.write_text(
+                "kraj,centrum danych,IP,uzytkownik linux\n"
+                "PL,OVH,1.2.3.4,root\n"
+                "USA,Hetzner,2.3.4.5,onlyping\n"
+                "BR,LookingGlass,5.6.7.8,onlyping\n",
+                encoding="utf-8",
+            )
+            out_json = tmp_path / "server-pings.json"
+            out_json.write_text(
+                json.dumps(
+                    {
+                        "schemaVersion": 1,
+                        "servers": [
+                            {"id": "1.2.3.4", "ip": "1.2.3.4", "sshStatus": "ok", "sshError": None},
+                            {"id": "2.3.4.5", "ip": "2.3.4.5", "sshStatus": "error", "sshError": "timeout"},
+                        ],
+                        "matrix": {
+                            "1.2.3.4": {"2.3.4.5": {"avg": 115.0, "min": 114.0, "max": 116.0, "loss": 0.0}},
+                            "2.3.4.5": {"1.2.3.4": {"avg": 115.0, "min": 114.0, "max": 116.0, "loss": 0.0}},
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with mock.patch("subprocess.run") as mocked_dry:
+                rc_dry = cp.main(["--csv", str(csv_path), "--dry-run"])
+            self.assertEqual(rc_dry, 0)
+            mocked_dry.assert_not_called()
+
+            called_hosts: list[str] = []
+
+            def fake_run(cmd, input=None, **kwargs):
+                called_hosts.append(cmd[-2])
+                stdout = (
+                    b"__PING_BEGIN__ 2.3.4.5 0\n"
+                    b"5 packets transmitted, 5 received, 0% packet loss, time 800ms\n"
+                    b"rtt min/avg/max/mdev = 114.0/115.0/116.0/1.0 ms\n"
+                    b"__PING_END__ 2.3.4.5\n"
+                    b"__PING_BEGIN__ 5.6.7.8 0\n"
+                    b"5 packets transmitted, 5 received, 0% packet loss, time 800ms\n"
+                    b"rtt min/avg/max/mdev = 210.0/212.0/214.0/1.0 ms\n"
+                    b"__PING_END__ 5.6.7.8\n"
+                )
+                return mock.Mock(returncode=0, stdout=stdout, stderr=b"")
+
+            with mock.patch("subprocess.run", side_effect=fake_run):
+                rc = cp.main(
+                    [
+                        "--csv",
+                        str(csv_path),
+                        "--out",
+                        str(out_json),
+                        "--merge",
+                        "--retry-failed",
+                    ]
+                )
+            self.assertEqual(rc, 0)
+            self.assertEqual(called_hosts, ["root@1.2.3.4"])
+
+            data = json.loads(out_json.read_text(encoding="utf-8"))
+            by_ip = {s["ip"]: s for s in data["servers"]}
+            self.assertEqual(by_ip["2.3.4.5"]["sshStatus"], "onlyping")
+            self.assertIsNone(by_ip["2.3.4.5"]["sshError"])
+            self.assertTrue(by_ip["2.3.4.5"]["onlyPing"])
+            self.assertEqual(by_ip["5.6.7.8"]["sshStatus"], "onlyping")
+            self.assertEqual(data["matrix"]["2.3.4.5"], {})
+            self.assertEqual(data["matrix"]["5.6.7.8"], {})
+            self.assertEqual(data["matrix"]["1.2.3.4"]["5.6.7.8"]["avg"], 212.0)
+
+    def test_all_onlyping_servers_completes_without_ssh(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            csv_path = tmp_path / "servers.csv"
+            csv_path.write_text(
+                "kraj,centrum danych,IP,uzytkownik linux\n"
+                "PL,Test1,1.2.3.4,onlyping\n"
+                "BR,Test2,5.6.7.8,onlyping\n",
+                encoding="utf-8",
+            )
+            out_json = tmp_path / "server-pings.json"
+            with mock.patch("subprocess.run") as mocked_run:
+                rc = cp.main(["--csv", str(csv_path), "--out", str(out_json)])
+            self.assertEqual(rc, 0)
+            mocked_run.assert_not_called()
+            data = json.loads(out_json.read_text(encoding="utf-8"))
+            self.assertTrue(all(s["onlyPing"] and s["sshStatus"] == "onlyping" for s in data["servers"]))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -461,6 +461,21 @@ textarea:focus {
   color: var(--rescued-text);
 }
 
+.badge-onlyping {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  background: rgba(168, 85, 247, 0.18);
+  color: #d8b4fe;
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
 /* Toolbar & Inspector */
 .toolbar {
   display: flex;

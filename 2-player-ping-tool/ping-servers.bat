@@ -166,6 +166,7 @@ call :add_server "OVH" "France" "51.178.27.242"
 call :add_server "OVH" "Poland" "54.37.128.135"
 call :add_server "OVH" "United Kingdom" "57.129.154.151"
 call :add_server "OVH" "US-East" "51.81.87.10"
+call :add_server "BR-digital" "Brazil" "201.16.9.3"
 :: === EMBEDDED_SERVERS_END ===
 goto :eof
 

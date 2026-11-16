@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Proxy Ping Analyzer — Czy proxy obniży Twój ping?</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <div class="brand">
+        <div class="brand-badge">PING</div>
+        <div>
+          <h1 data-i18n="title">Proxy Ping Analyzer</h1>
+          <p class="subtitle" data-i18n="subtitle">Porównaj bezpośredni ping do serwerów z trasą przez serwery proxy (macierz każdy-do-każdego).</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <div id="datasetStatus" class="status-pill">Ładowanie danych...</div>
+        <button id="btnOpenServerModal" type="button" class="btn btn-secondary" data-i18n="loadServerJsonBtn">Wgraj server-pings.json</button>
+        <button id="btnToggleLang" type="button" class="btn btn-ghost" title="Switch language">EN</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container main-content">
+    <div id="demoBanner" class="banner banner-warn hidden">
+      <strong data-i18n="demoBannerTitle">Dane przykładowe (demo):</strong>
+      <span data-i18n="demoBannerText">Wyświetlane są przykładowe pomiary serwer↔serwer. Podmień plik <code>data/server-pings.json</code> (lub kliknij „Wgraj server-pings.json”), aby użyć własnych wyników z <code>collect_pings.py</code>.</span>
+    </div>
+
+    <!-- KROK 1: Dane gracza -->
+    <section class="card" id="playerSection">
+      <div class="card-header">
+        <div>
+          <h2 data-i18n="step1Title">1. Twój ping do serwerów</h2>
+          <p class="muted" data-i18n="step1Desc">Uruchom <code>ping-servers.bat</code> (lub <code>ping-servers.php</code>) na swoim komputerze, a następnie wklej wynik ze schowka poniżej.</p>
+        </div>
+        <div class="btn-group">
+          <button id="btnPasteClipboard" type="button" class="btn btn-primary" data-i18n="pasteClipboardBtn">Wklej ze schowka</button>
+          <label class="btn btn-secondary file-label">
+            <span data-i18n="uploadPlayerBtn">Wgraj my-pings.json</span>
+            <input id="playerFileInput" type="file" accept=".json,.txt,.csv" hidden />
+          </label>
+          <button id="btnClearPlayer" type="button" class="btn btn-ghost" data-i18n="clearBtn">Wyczyść</button>
+        </div>
+      </div>
+
+      <div class="player-input-grid">
+        <div>
+          <textarea
+            id="playerInput"
+            rows="6"
+            spellcheck="false"
+            placeholder='Wklej tutaj zawartość my-pings.json (lub linie typu 1.2.3.4=35)...'
+          ></textarea>
+          <div class="demo-presets">
+            <span class="muted" data-i18n="demoPresetsLabel">Przykłady testowe:</span>
+            <button id="btnPresetBR" type="button" class="chip-btn" data-i18n="presetBR">Gracz z Brazylii (słaba trasa do EU)</button>
+            <button id="btnPresetPL" type="button" class="chip-btn" data-i18n="presetPL">Gracz z Polski (niski ping w EU)</button>
+          </div>
+          <div id="playerParseStatus" class="parse-status muted"></div>
+        </div>
+
+        <div class="direct-pings-panel">
+          <div class="direct-pings-head">
+            <h3 data-i18n="directPingsHeading">Twoje bezpośrednie pingi (ms)</h3>
+            <span class="muted small" data-i18n="directPingsHint">Możesz też wpisać/zmienić ręcznie</span>
+          </div>
+          <div id="directPingsGrid" class="direct-pings-grid"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- KROK 2: Podsumowanie i rekomendacje -->
+    <section class="card hidden" id="summarySection">
+      <div class="card-header">
+        <div>
+          <h2 data-i18n="step2Title">2. Gdzie proxy najbardziej pomaga?</h2>
+          <p class="muted" data-i18n="step2Desc">Najlepsze znalezione proxy dla każdego serwera docelowego. Kliknij wiersz, aby podświetlić kolumnę w tabeli poniżej.</p>
+        </div>
+        <button id="btnCopySummary" type="button" class="btn btn-secondary" data-i18n="copySummaryBtn">Kopiuj podsumowanie</button>
+      </div>
+
+      <div id="kpiRow" class="kpi-row"></div>
+
+      <div class="table-scroll">
+        <table class="summary-table" id="summaryTable">
+          <thead>
+            <tr>
+              <th data-i18n="colTarget">Serwer docelowy</th>
+              <th data-i18n="colDirect">Bezpośrednio</th>
+              <th data-i18n="colBestProxy">Najlepsze proxy</th>
+              <th data-i18n="colRoute">Rozbicie trasy (Gracz→Proxy + Proxy→Cel)</th>
+              <th data-i18n="colViaProxy">Łącznie przez proxy</th>
+              <th data-i18n="colDelta">Zysk / Strata</th>
+              <th data-i18n="colAlternatives">Kolejne opcje</th>
+            </tr>
+          </thead>
+          <tbody id="summaryBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- KROK 3: Macierz każdy-do-każdego -->
+    <section class="card" id="matrixSection">
+      <div class="card-header">
+        <div>
+          <h2 data-i18n="step3Title">3. Tabela każdy-do-każdego (Proxy × Serwer docelowy)</h2>
+          <p class="muted" id="matrixSubtitle" data-i18n="step3DescNoPlayer">Aktualnie wyświetlane są pingi między serwerami. Wklej swój ping w kroku 1, aby zobaczyć +/- ms przez każde proxy.</p>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="tool-item">
+          <label for="viewModeSelect" data-i18n="viewModeLabel">Widok komórek</label>
+          <select id="viewModeSelect">
+            <option value="full" data-i18n="modeFull">Delta (+/- ms) + Suma + S2S</option>
+            <option value="delta" data-i18n="modeDelta">Tylko zysk / strata (+/- ms)</option>
+            <option value="total" data-i18n="modeTotal">Tylko łączny ping przez proxy</option>
+            <option value="s2s" data-i18n="modeS2S">Tylko ping serwer ↔ serwer</option>
+          </select>
+        </div>
+
+        <div class="tool-item">
+          <label for="metricSelect" data-i18n="metricLabel">Metryka</label>
+          <select id="metricSelect">
+            <option value="avg" data-i18n="metricAvg">Średni (avg)</option>
+            <option value="median" data-i18n="metricMedian">Mediana (median)</option>
+            <option value="min" data-i18n="metricMin">Minimalny (min)</option>
+          </select>
+        </div>
+
+        <div class="tool-item">
+          <label for="thresholdSelect" data-i18n="thresholdLabel">Próg opłacalności</label>
+          <select id="thresholdSelect">
+            <option value="1">≥ 1 ms</option>
+            <option value="5" selected>≥ 5 ms</option>
+            <option value="10">≥ 10 ms</option>
+            <option value="20">≥ 20 ms</option>
+          </select>
+        </div>
+
+        <div class="tool-item">
+          <label for="filterRowInput" data-i18n="filterRowLabel">Filtruj wiersze (Proxy)</label>
+          <input id="filterRowInput" type="text" placeholder="np. PL, OVH, 1.2..." />
+        </div>
+
+        <div class="tool-item">
+          <label for="filterColInput" data-i18n="filterColLabel">Filtruj kolumny (Cel)</label>
+          <input id="filterColInput" type="text" placeholder="np. USA, DE..." />
+        </div>
+
+        <div class="tool-checks">
+          <label class="check-label">
+            <input id="chkOnlyProfitable" type="checkbox" />
+            <span data-i18n="onlyProfitable">Tylko opłacalne proxy</span>
+          </label>
+          <label class="check-label">
+            <input id="chkReverseFallback" type="checkbox" checked />
+            <span data-i18n="reverseFallback">Użyj odwrotnego (Cel→Proxy), gdy brak Proxy→Cel</span>
+          </label>
+        </div>
+
+        <div class="tool-actions">
+          <button id="btnSwapAxes" type="button" class="btn btn-secondary btn-sm" data-i18n="swapAxesBtn">Zamień osie</button>
+        </div>
+      </div>
+
+      <div id="cellInspector" class="cell-inspector">
+        <span class="muted" data-i18n="inspectorDefault">Najedź na dowolną komórkę w tabeli, aby zobaczyć dokładne wyliczenie ścieżki.</span>
+      </div>
+
+      <div class="legend">
+        <span class="leg"><i class="swatch sw-best"></i> <span data-i18n="legBest">★ Najlepsze proxy dla celu</span></span>
+        <span class="leg"><i class="swatch sw-gain"></i> <span data-i18n="legGain">Oszczędność (≥ próg)</span></span>
+        <span class="leg"><i class="swatch sw-slight"></i> <span data-i18n="legSlight">Minimalny zysk (&lt; próg)</span></span>
+        <span class="leg"><i class="swatch sw-worse"></i> <span data-i18n="legWorse">Wolniej przez proxy (+ms)</span></span>
+        <span class="leg"><i class="swatch sw-self"></i> <span data-i18n="legSelf">Bezpośrednio (Proxy = Cel)</span></span>
+        <span class="leg"><i class="swatch sw-rescued"></i> <span data-i18n="legRescued">Odzyskane (brak trasy bezp.)</span></span>
+      </div>
+
+      <div class="matrix-wrapper">
+        <table class="matrix-table" id="matrixTable"></table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal do wgrania własnego server-pings.json -->
+  <div id="serverModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="serverModalTitle">
+    <div class="modal-backdrop" id="serverModalBackdrop"></div>
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="serverModalTitle" data-i18n="modalTitle">Załaduj plik server-pings.json</h3>
+        <button id="btnCloseServerModal" type="button" class="btn btn-ghost btn-sm">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="muted" data-i18n="modalDesc">Wybierz plik wygenerowany przez <code>1-ssh-ping-collector/collect_pings.py</code> lub wklej jego zawartość JSON poniżej.</p>
+        <div class="modal-upload-row">
+          <label class="btn btn-secondary file-label">
+            <span data-i18n="modalChooseFile">Wybierz plik .json</span>
+            <input id="serverFileInput" type="file" accept=".json" hidden />
+          </label>
+        </div>
+        <textarea id="serverJsonPaste" rows="8" spellcheck="false" placeholder='{"schemaVersion": 1, "servers": [...], "matrix": {...}}'></textarea>
+        <div id="serverModalError" class="error-text"></div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnApplyServerJson" type="button" class="btn btn-primary" data-i18n="modalApply">Zastosuj dane serwerów</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="data/server-pings.js"></script>
+  <script src="analyzer.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

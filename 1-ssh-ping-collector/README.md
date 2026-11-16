@@ -1,48 +1,48 @@
 # 1. SSH Ping Collector (`collect_pings.py`)
 
-Program dla administratora, który łączy się przez SSH do każdego serwera z listy CSV, uruchamia `ping` ze standardowego POSIX `sh` do wszystkich pozostałych serwerów z listy (bez instalowania jakichkolwiek aplikacji i bez otwierania portów), a następnie zapisuje pełną macierz opóźnień do JSON (bez loginów SSH).
+Administrator tool that connects over SSH to every server in a CSV file, runs `ping` via standard POSIX `sh` to all other servers in the list (without installing any applications or opening any ports), and saves the full latency matrix to JSON (without SSH usernames).
 
-## Wymagania
+## Requirements
 
-- Python 3.8+ (wyłącznie biblioteka standardowa — brak `pip install`)
-- Klient OpenSSH (`ssh` w `PATH` — wbudowany w Windows 10/11, Linux i macOS)
-- Zalecane klucze SSH (`ssh-agent` / `~/.ssh/config`) dla połączeń równoległych bez ręcznego wpisywania hasła
+- Python 3.8+ (standard library only — no `pip install` needed)
+- OpenSSH client (`ssh` in `PATH` — built into Windows 10/11, Linux, and macOS)
+- SSH keys (`ssh-agent` / `~/.ssh/config`) recommended for parallel non-interactive connections
 
-## Format pliku CSV
+## CSV Format
 
-Plik CSV powinien mieć kolumny `kraj,centrum danych,IP,uzytkownik linux` (nagłówek jest opcjonalny):
+The CSV file uses `country,datacenter,IP,linux user` columns (header row is optional):
 
 ```csv
-kraj,centrum danych,IP,uzytkownik linux
+country,datacenter,IP,linux user
 PL,OVH,1.2.3.4,root
 USA,Hetzner,2.3.4.5,ubuntu
 ```
 
-Opcjonalnie można podać niestandardowy port SSH jako `1.2.3.4:2222` albo w 5. kolumnie.
+Optionally, you can specify a custom SSH port as `1.2.3.4:2222` or in a 5th column.
 
-## Podstawowe użycie
+## Basic Usage
 
 ```bash
 python collect_pings.py --csv servers.csv --out ../3-web-viewer/data/server-pings.json --sync-player-dir ../2-player-ping-tool
 ```
 
-Co zrobi powyższe polecenie:
-1. Zmierzy ping między każdą parą serwerów z `servers.csv` (zrównoleglone po SSH i na samych serwerach).
-2. Zapisze `../3-web-viewer/data/server-pings.json` (oraz `server-pings.js` do otwierania strony lokalnie bez serwera HTTP).
-3. Zaktualizuje listę serwerów (bez użytkowników SSH!) w `../2-player-ping-tool/` (`servers.txt`, `ping-servers.bat`, `ping-servers.php`).
+What this command does:
+1. Measures ping between every pair of servers in `servers.csv` (parallelized across SSH hosts and inside each server).
+2. Writes `../3-web-viewer/data/server-pings.json` (plus `server-pings.js` so the web page can also be opened locally via `file://`).
+3. Updates the server list (without SSH usernames!) in `../2-player-ping-tool/` (`servers.txt`, `ping-servers.bat`, `ping-servers.php`).
 
-## Przydatne opcje
+## Useful Options
 
-- `--dry-run` — sprawdza CSV i wypisuje komendy SSH bez łączenia się z serwerami.
-- `--count 10` — zwiększa liczbę mierzonych pakietów ICMP (domyślnie `5`).
-- `--warmup 2` — liczba pierwszych pakietów rozgrzewkowych odrzucanych ze statystyk (domyślnie `2`, eliminuje skok `icmp_seq=1` z ARP/conntrack/SDN w chmurze).
-- `--ssh-workers 15` — liczba równoczesnych sesji SSH (domyślnie `10`).
-- `--remote-concurrency 8` — liczba równoczesnych `ping` na jednym serwerze (domyślnie `8`).
-- `--merge --retry-failed` — ponawia tylko te serwery, które nie odpowiedziały lub zostały dopisane do CSV, zachowując poprzednie udane pomiary.
-- `--no-batch-mode` — wyłącza `BatchMode=yes` (pozwala wpisać hasło ręcznie po kolei).
-- `--ssh-option IdentityFile=~/.ssh/moj_klucz` — przekazuje dodatkową opcję `-o` do `ssh`.
+- `--dry-run` — validates the CSV and prints planned SSH commands without connecting.
+- `--count 10` — number of measured ICMP packets per pair (default: `5`).
+- `--warmup 2` — number of initial warmup packets discarded from stats (default: `2`, removes `icmp_seq=1` ARP/conntrack/cloud SDN spikes).
+- `--ssh-workers 15` — number of concurrent SSH sessions (default: `10`).
+- `--remote-concurrency 8` — number of concurrent `ping` targets inside each server (default: `8`).
+- `--merge --retry-failed` — retries only servers that failed or were newly added to the CSV while keeping previous successful measurements.
+- `--no-batch-mode` — disables `BatchMode=yes` (allows typing passwords interactively).
+- `--ssh-option IdentityFile=~/.ssh/my_key` — passes an extra `-o` option to `ssh`.
 
-## Testy jednostkowe
+## Unit Tests
 
 ```bash
 python test_collector.py -v

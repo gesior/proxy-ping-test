@@ -148,7 +148,7 @@
   };
 
   var state = {
-    lang: 'pl',
+    lang: 'en',
     serverData: null,
     playerPings: null,
     viewMode: 'full',
@@ -296,7 +296,7 @@
         })
         .catch(function (err) {
           if (!state.serverData) {
-            els.datasetStatus.textContent = 'Brak pliku data/server-pings.json';
+            els.datasetStatus.textContent = 'Missing data/server-pings.json';
             console.warn('Could not fetch data/server-pings.json:', err);
           }
         });
@@ -762,22 +762,27 @@
         '</strong>: <strong>' +
         escapeHtml(fmtMs(cell.proxyToTargetMs)) +
         '</strong>' +
-        (cell.isReverseFallback ? ' <span class="muted">(kierunek odwrotny)</span>' : '') +
+        (cell.isReverseFallback
+          ? ' <span class="muted">(' + (state.lang === 'pl' ? 'kierunek odwrotny' : 'reverse direction') + ')</span>'
+          : '') +
         (cell.proxyToTargetLoss != null ? ' · loss: ' + escapeHtml(cell.proxyToTargetLoss) + '%' : '');
       return;
     }
 
     if (cell.kind === 'compared') {
       var cls = cell.deltaMs < 0 ? 'badge-gain' : 'badge-neutral';
+      var youProxyLbl = state.lang === 'pl' ? 'Gracz→Proxy' : 'You→Proxy';
+      var proxyTargetLbl = state.lang === 'pl' ? 'Proxy→Cel' : 'Proxy→Target';
+      var targetLbl = state.lang === 'pl' ? 'Cel' : 'Target';
       els.cellInspector.innerHTML =
         '<span>Proxy: <strong>' +
         escapeHtml(pSrv.label) +
-        '</strong> → Cel: <strong>' +
+        '</strong> → ' + targetLbl + ': <strong>' +
         escapeHtml(tSrv.label) +
         '</strong></span>' +
-        '<span>| Gracz→Proxy: <strong>' +
+        '<span>| ' + youProxyLbl + ': <strong>' +
         escapeHtml(fmtMs(cell.playerToProxyMs)) +
-        '</strong> + Proxy→Cel: <strong>' +
+        '</strong> + ' + proxyTargetLbl + ': <strong>' +
         escapeHtml(fmtMs(cell.proxyToTargetMs)) +
         (cell.isReverseFallback ? ' ~' : '') +
         '</strong> = <strong>' +
@@ -799,10 +804,11 @@
     }
 
     if (cell.kind === 'rescued') {
+      var targetLbl2 = state.lang === 'pl' ? 'Cel' : 'Target';
       els.cellInspector.innerHTML =
         '<span>Proxy: <strong>' +
         escapeHtml(pSrv.label) +
-        '</strong> → Cel: <strong>' +
+        '</strong> → ' + targetLbl2 + ': <strong>' +
         escapeHtml(tSrv.label) +
         '</strong></span>' +
         '<span class="badge badge-rescued">' +
@@ -818,7 +824,9 @@
       escapeHtml(pSrv.label) +
       ' → ' +
       escapeHtml(tSrv.label) +
-      ': <span class="muted">brak pomiaru</span></span>';
+      ': <span class="muted">' +
+      (state.lang === 'pl' ? 'brak pomiaru' : 'no measurement') +
+      '</span></span>';
   }
 
   function loadDemoPreset(region) {
@@ -873,7 +881,8 @@
   els.btnPasteClipboard.addEventListener('click', function () {
     if (!navigator.clipboard || !navigator.clipboard.readText) {
       els.playerInput.focus();
-      els.playerParseStatus.textContent = 'Użyj Ctrl+V w polu tekstowym powyżej.';
+      els.playerParseStatus.textContent =
+        state.lang === 'pl' ? 'Użyj Ctrl+V w polu tekstowym powyżej.' : 'Press Ctrl+V in the text box above.';
       els.playerParseStatus.className = 'parse-status muted';
       return;
     }
@@ -885,7 +894,10 @@
       })
       .catch(function () {
         els.playerInput.focus();
-        els.playerParseStatus.textContent = 'Brak dostępu do schowka — wklej ręcznie (Ctrl+V).';
+        els.playerParseStatus.textContent =
+          state.lang === 'pl'
+            ? 'Brak dostępu do schowka — wklej ręcznie (Ctrl+V).'
+            : 'Clipboard access denied — please paste manually (Ctrl+V).';
         els.playerParseStatus.className = 'parse-status err';
       });
   });

@@ -3,17 +3,16 @@ chcp 65001 >nul
 setlocal EnableExtensions EnableDelayedExpansion
 
 :: ============================================================================
-:: Proxy Ping Test - Narzedzie dla gracza (Windows Batch)
+:: Proxy Ping Test - Player Tool (Windows Batch)
 :: ============================================================================
-:: Ten skrypt jest w 100%% jawny i bezpieczny do przejrzenia w Notatniku:
-:: - Uzywa wylacznie wbudowanego systemowego polecenia "ping".
-:: - NIE pobiera zadnych plikow, NIE wysyla niczego przez siec, NIE zmienia
-::   rejestru ani plikow systemowych.
-:: - Wyniki zapisuje lokalnie do pliku "my-pings.json" obok tego skryptu
-::   oraz kopiuje je do schowka (Ctrl+V na stronie WWW).
+:: This script is 100%% transparent and safe to inspect in Notepad:
+:: - Uses ONLY the built-in Windows "ping" command.
+:: - Does NOT download files, upload anything, or modify the registry/system.
+:: - Saves results locally to "my-pings.json" next to this script
+::   and copies them to your clipboard (Ctrl+V on the website).
 :: ============================================================================
 
-set "PING_COUNT=4"
+set "PING_COUNT=20"
 set "PING_TIMEOUT_MS=1500"
 set "OUT_FILE=%~dp0my-pings.json"
 set "SERVERS_FILE=%~dp0servers.txt"
@@ -49,14 +48,14 @@ if %TOTAL% equ 0 (
 )
 
 if %TOTAL% equ 0 (
-    echo [BLAD] Brak serwerow do sprawdzenia. Uzupelnij plik servers.txt.
+    echo [ERROR] No servers to test. Please populate servers.txt.
     if "%NO_PAUSE%"=="0" pause
     exit /b 1
 )
 
 echo ============================================================================
-echo   Test pingu do serwerow (%TOTAL% serwerow, %PING_COUNT% pakiety na serwer)
-echo   Prosze czekac - nie zamykaj okna do zakonczenia testu...
+echo   Server Ping Test (%TOTAL% servers, %PING_COUNT% packets per server)
+echo   Please wait - do not close this window until the test finishes...
 echo ============================================================================
 echo.
 
@@ -82,7 +81,7 @@ for /L %%I in (1,1,%TOTAL%) do (
         set "json_min=!p_min!"
         set "json_max=!p_max!"
     ) else (
-        echo [%%I/%TOTAL%] !cur_country! - !cur_dc! ^(!cur_ip!^) -^> TIMEOUT / BRAK ODPOWIEDZI ^(loss: !p_loss!%%^)
+        echo [%%I/%TOTAL%] !cur_country! - !cur_dc! ^(!cur_ip!^) -^> TIMEOUT / NO REPLY ^(loss: !p_loss!%%^)
         set "json_avg=null"
         set "json_min=null"
         set "json_max=null"
@@ -106,21 +105,21 @@ move /y "%TMP_JSON%" "%OUT_FILE%" >nul
 
 echo.
 echo ============================================================================
-echo   ZAKONCZONO!
-echo   Wyniki zapisano do pliku:
+echo   FINISHED
+echo   Results saved to:
 echo   %OUT_FILE%
 echo.
 if "%NO_CLIP%"=="0" (
     where clip >nul 2>&1
     if !errorlevel! equ 0 (
         clip < "%OUT_FILE%"
-        echo   Wynik zostal automatycznie SKOPIOWANY DO SCHOWKA ^(Ctrl+V^).
-        echo   Przejdz teraz na strone WWW i wklej wyniki w polu "Twoj ping".
+        echo   Results have been automatically COPIED TO CLIPBOARD ^(Ctrl+V^).
+        echo   Open the website now and paste them into "Your ping to servers".
     ) else (
-        echo   Otworz plik my-pings.json w Notatniku, skopiuj calosc i wklej na stronie.
+        echo   Open my-pings.json in Notepad, copy all text, and paste it on the website.
     )
 ) else (
-    echo   Pominieto kopiowanie do schowka ^(--no-clip^).
+    echo   Skipped copying to clipboard ^(--no-clip^).
 )
 echo ============================================================================
 echo.
@@ -130,7 +129,7 @@ exit /b 0
 
 
 :: ----------------------------------------------------------------------------
-:: Wczytywanie listy serwerow z pliku servers.txt (kraj,centrum_danych,IP)
+:: Load server list from servers.txt (country,datacenter,IP)
 :: ----------------------------------------------------------------------------
 :load_from_file
 set "f_path=%~1"
@@ -155,12 +154,18 @@ goto :eof
 
 
 :: ----------------------------------------------------------------------------
-:: Wbudowana awaryjna lista serwerow (aktualizowana przez collect_pings.py)
+:: Embedded fallback server list (updated by collect_pings.py)
 :: ----------------------------------------------------------------------------
 :load_embedded_servers
 :: === EMBEDDED_SERVERS_START ===
-call :add_server "Oracle" "DE" "141.144.226.122"
-call :add_server "Hetzner" "DE" "195.201.151.197"
+call :add_server "OVH" "Canada" "158.69.209.112"
+call :add_server "Oracle" "Germany" "141.144.226.122"
+call :add_server "Hetzner" "Germany" "195.201.151.197"
+call :add_server "OVH" "Germany" "57.129.112.208"
+call :add_server "OVH" "France" "51.178.27.242"
+call :add_server "OVH" "Poland" "54.37.128.135"
+call :add_server "OVH" "United Kingdom" "57.129.154.151"
+call :add_server "OVH" "US-East" "51.81.87.10"
 :: === EMBEDDED_SERVERS_END ===
 goto :eof
 
@@ -178,7 +183,7 @@ goto :eof
 
 
 :: ----------------------------------------------------------------------------
-:: Wykonanie polecenia ping i niezalezne od jezyka Windows parsowanie wyniku
+:: Run ping and parse output independently of Windows display language
 :: ----------------------------------------------------------------------------
 :ping_one
 set "TARGET_IP=%~1"
@@ -190,8 +195,8 @@ set "p_max="
 set "p_avg="
 set "in_stats=0"
 
-:: Jeden pakiet rozgrzewkowy, aby pominac pierwszy skok ARP/NAT/conntrack
-ping -n 1 -w 600 %TARGET_IP% >nul 2>&1
+:: One warmup packet to avoid first-packet ARP/NAT/conntrack cold-start spike
+ping -n 3 -w 600 %TARGET_IP% >nul 2>&1
 
 for /f "usebackq delims=" %%L in (`ping -n %PING_COUNT% -w %PING_TIMEOUT_MS% %TARGET_IP% 2^>nul`) do (
     set "line=%%L"
@@ -220,7 +225,7 @@ goto :eof
 
 
 :: ----------------------------------------------------------------------------
-:: Pomocnicze funkcje tekstowe
+:: Text helper subroutines
 :: ----------------------------------------------------------------------------
 :extract_int
 set "raw=%~1"

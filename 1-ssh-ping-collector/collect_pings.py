@@ -641,8 +641,8 @@ def sync_player_tool_dir(servers: list[ServerEntry], player_dir: Path) -> list[P
     # 1. servers.txt (no SSH usernames!)
     servers_txt = player_dir / "servers.txt"
     lines = [
-        "# Lista serwerow do sprawdzenia pingu (bez loginow SSH)",
-        "# Format: kraj,centrum_danych,IP",
+        "# Server list for ping test (no SSH credentials)",
+        "# Format: country,datacenter,IP",
     ]
     for srv in servers:
         c = srv.country.replace(",", " ")
@@ -703,98 +703,98 @@ def compute_recommended_ssh_timeout(num_targets: int, count: int, interval: floa
 
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Zbiera macierz pingow kazdy-do-kazdego z serwerow SSH bez instalowania niczego na serwerach."
+        description="Collects an every-to-every ping matrix from SSH servers without installing anything on them."
     )
     parser.add_argument(
         "--csv",
         type=Path,
         default=Path("servers.csv"),
-        help="Sciezka do pliku CSV: kraj,centrum danych,IP,uzytkownik linux (domyslnie: servers.csv)",
+        help="Path to CSV file: country,datacenter,IP,linux user (default: servers.csv)",
     )
     parser.add_argument(
         "--out",
         type=Path,
         default=Path("../3-web-viewer/data/server-pings.json"),
-        help="Sciezka wyjsciowa JSON (domyslnie: ../3-web-viewer/data/server-pings.json)",
+        help="Output JSON path (default: ../3-web-viewer/data/server-pings.json)",
     )
     parser.add_argument(
         "--no-js",
         action="store_true",
-        help="Nie generuj pliku .js obok .json (plik .js pozwala otwierac strone lokalnie przez file://)",
+        help="Do not generate sibling .js file (the .js file allows opening the page locally via file://)",
     )
     parser.add_argument(
         "--sync-player-dir",
         type=Path,
         default=None,
-        help="Katalog narzedzia dla graczy (np. ../2-player-ping-tool), aby zaktualizowac servers.txt oraz wbudowana liste w .bat/.php",
+        help="Player tool directory (e.g. ../2-player-ping-tool) to update servers.txt and embedded lists in .bat/.php",
     )
-    parser.add_argument("--count", type=int, default=5, help="Liczba mierzonych pakietow ping na pare (domyslnie: 5)")
+    parser.add_argument("--count", type=int, default=5, help="Measured ICMP ping packets per pair (default: 5)")
     parser.add_argument(
         "--warmup",
         type=int,
         default=2,
-        help="Liczba pierwszych pakietow rozgrzewkowych odrzucanych ze statystyk (chroni przed skokiem ARP/conntrack/SDN, domyslnie: 2)",
+        help="Initial warmup packets discarded from stats to avoid ARP/conntrack/SDN cold-start spikes (default: 2)",
     )
-    parser.add_argument("--interval", type=float, default=0.2, help="Odstep miedzy pakietami w sekundach (domyslnie: 0.2)")
-    parser.add_argument("--timeout", type=int, default=2, help="Timeout pojedynczego pakietu w sekundach (domyslnie: 2)")
+    parser.add_argument("--interval", type=float, default=0.2, help="Interval between packets in seconds (default: 0.2)")
+    parser.add_argument("--timeout", type=int, default=2, help="Per-packet timeout in seconds (default: 2)")
     parser.add_argument(
         "--ssh-workers",
         type=int,
         default=10,
-        help="Ile serwerow SSH odpytywac rownolegle (domyslnie: 10)",
+        help="Number of SSH servers to query in parallel (default: 10)",
     )
     parser.add_argument(
         "--remote-concurrency",
         type=int,
         default=8,
-        help="Ile docelowych serwerow pingowac rownolegle wewnatrz jednego serwera (domyslnie: 8)",
+        help="Number of targets to ping concurrently inside each server (default: 8)",
     )
     parser.add_argument(
         "--ssh-timeout",
         type=int,
         default=None,
-        help="Limit czasu calej sesji SSH w sekundach (domyslnie wyliczany automatycznie)",
+        help="Overall SSH session timeout in seconds (auto-calculated by default)",
     )
-    parser.add_argument("--connect-timeout", type=int, default=10, help="SSH ConnectTimeout w sekundach (domyslnie: 10)")
+    parser.add_argument("--connect-timeout", type=int, default=10, help="SSH ConnectTimeout in seconds (default: 10)")
     parser.add_argument(
         "--strict-host-key",
         choices=["accept-new", "yes", "no"],
         default="accept-new",
-        help="Wartosc SSH StrictHostKeyChecking (domyslnie: accept-new)",
+        help="SSH StrictHostKeyChecking value (default: accept-new)",
     )
     parser.add_argument(
         "--no-batch-mode",
         action="store_true",
-        help="Wylacz BatchMode=yes (pozwala wpisac haslo recznie; wymusza --ssh-workers 1)",
+        help="Disable BatchMode=yes (allows interactive password prompts; forces --ssh-workers 1)",
     )
     parser.add_argument(
         "--ssh-option",
         action="append",
         default=[],
-        help="Dodatkowa opcja SSH -o (np. --ssh-option IdentityFile=~/.ssh/id_ed25519)",
+        help="Extra SSH -o option (e.g. --ssh-option IdentityFile=~/.ssh/id_ed25519)",
     )
     parser.add_argument(
         "--merge",
         action="store_true",
-        help="Polacz wyniki z istniejacym plikiem --out (zachowuje stare udane pomiary dla pominietych serwerow)",
+        help="Merge with existing --out JSON (keeps previous successful measurements for skipped servers)",
     )
     parser.add_argument(
         "--retry-failed",
         action="store_true",
-        help="W polaczeniu z --merge: wykonaj SSH tylko dla serwerow, ktorych brakuje lub mialy blad w istniejacym JSON",
+        help="With --merge: only SSH into servers missing or marked as failed in existing JSON",
     )
     parser.add_argument(
         "--only-from",
         type=str,
         default="",
-        help="Lista IP lub kodow krajow oddzielona przecinkami do uruchomienia tylko z wybranych zrodel",
+        help="Comma-separated list of source IPs or country codes to run from",
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Sprawdz CSV i pokaz planowane komendy bez laczenia przez SSH",
+        help="Validate CSV and print planned SSH commands without connecting",
     )
-    parser.add_argument("-v", "--verbose", action="store_true", help="Szczegolowe logowanie")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose logging")
     return parser
 
 
@@ -808,11 +808,11 @@ def main(argv: list[str] | None = None) -> int:
         print(f"[ERROR] {exc}", file=sys.stderr)
         return 1
 
-    print(f"Zaladowano {len(servers)} serwerow z {args.csv}")
+    print(f"Loaded {len(servers)} servers from {args.csv}")
 
     if args.sync_player_dir:
         updated = sync_player_tool_dir(servers, args.sync_player_dir)
-        print("Zaktualizowano pliki narzedzia dla graczy: " + ", ".join(str(p) for p in updated))
+        print("Updated player tool files: " + ", ".join(str(p) for p in updated))
 
     existing_data = load_existing_json(args.out) if (args.merge or args.retry_failed) else None
     existing_matrix: dict[str, dict[str, Any]] = {}
@@ -838,7 +838,7 @@ def main(argv: list[str] | None = None) -> int:
         sources_to_run.append(srv)
 
     if args.dry_run:
-        print(f"[DRY-RUN] Do odpytania przez SSH: {len(sources_to_run)}/{len(servers)} serwerow.")
+        print(f"[DRY-RUN] Servers to query via SSH: {len(sources_to_run)}/{len(servers)}.")
         for srv in sources_to_run:
             cmd = build_ssh_command(
                 srv,
@@ -881,10 +881,10 @@ def main(argv: list[str] | None = None) -> int:
     completed = 0
 
     if total == 0:
-        print("Brak serwerow do odpytania (wszystkie pominiete przez --retry-failed / --only-from).")
+        print("No servers to query (all skipped by --retry-failed / --only-from).")
     else:
         print(
-            f"Start pomiarow: {total} serwerow zrodlowych -> {len(servers) - 1} celow kazdy "
+            f"Starting measurements: {total} source servers -> {len(servers) - 1} targets each "
             f"(ssh_workers={ssh_workers}, remote_concurrency={args.remote_concurrency}, "
             f"count={args.count}, warmup={warmup}, ssh_timeout={ssh_timeout}s)..."
         )
@@ -922,7 +922,7 @@ def main(argv: list[str] | None = None) -> int:
                 ok_pairs = sum(1 for v in row_results.values() if v.get("avg") is not None)
                 with log_lock:
                     if status == "ok":
-                        print(f"[{completed}/{total}] OK      {srv.label} ({srv.ip}) -> {ok_pairs}/{len(servers) - 1} odpowiedzi")
+                        print(f"[{completed}/{total}] OK      {srv.label} ({srv.ip}) -> {ok_pairs}/{len(servers) - 1} replies")
                     elif status == "partial":
                         print(f"[{completed}/{total}] PARTIAL {srv.label} ({srv.ip}) -> {ok_pairs}/{len(servers) - 1} ({err})")
                     else:
@@ -947,13 +947,13 @@ def main(argv: list[str] | None = None) -> int:
     }
 
     write_outputs(payload, args.out, write_js=not args.no_js)
-    print(f"\nZapisano wyniki do: {args.out}")
+    print(f"\nSaved results to: {args.out}")
     if not args.no_js:
-        print(f"Zapisano wersje JS dla file:// do: {args.out.with_suffix('.js')}")
+        print(f"Saved JS wrapper for file:// to: {args.out.with_suffix('.js')}")
 
     failed_count = sum(1 for s in public_servers if s["sshStatus"] == "error")
     if failed_count:
-        print(f"[UWAGA] {failed_count} serwer(ow) nie odpowiedzialo przez SSH. Mozesz ponowic dla nich poleceniem z --merge --retry-failed.")
+        print(f"[WARNING] {failed_count} server(s) failed over SSH. You can retry them with --merge --retry-failed.")
     return 0
 
 

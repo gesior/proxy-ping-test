@@ -2,29 +2,29 @@
 declare(strict_types=1);
 
 /**
- * Proxy Ping Test - Narzedzie dla gracza (PHP CLI)
- * =================================================
- * Skrypt jest w 100% jawny i prosty do weryfikacji:
- * - Uruchamia wylacznie systemowe polecenie `ping` (bez pobierania plikow
- *   i bez wysylania danych przez internet).
- * - Odpytuje serwery rownolegle (domyslnie 8 naraz), dzieki czemu caly test
- *   trwa kilka sekund nawet przy duzej liczbie serwerow.
- * - Zapisuje wynik do pliku `my-pings.json` i kopiuje go do schowka.
+ * Proxy Ping Test - Player Tool (PHP CLI)
+ * =======================================
+ * This script is 100% transparent and easy to audit:
+ * - Runs ONLY the system `ping` command (no file downloads and no network
+ *   uploads).
+ * - Queries servers in parallel (8 at a time by default), finishing in a few
+ *   seconds even for large server lists.
+ * - Saves results to `my-pings.json` and copies them to the clipboard.
  *
- * Uruchomienie:
+ * Usage:
  *   php ping-servers.php
  */
 
 if (PHP_SAPI !== 'cli') {
-    fwrite(STDERR, "Ten skrypt nalezy uruchomic w terminalu (PHP CLI): php ping-servers.php\n");
+    fwrite(STDERR, "This script must be run in a terminal (PHP CLI): php ping-servers.php\n");
     exit(1);
 }
 
 $options = parseCliArgs($argv);
 $serversFile = $options['servers'] ?? (__DIR__ . DIRECTORY_SEPARATOR . 'servers.txt');
 $outFile     = $options['out'] ?? (__DIR__ . DIRECTORY_SEPARATOR . 'my-pings.json');
-$count       = max(1, (int)($options['count'] ?? 4));
-$warmup      = max(0, (int)($options['warmup'] ?? 1));
+$count       = max(1, (int)($options['count'] ?? 20));
+$warmup      = max(0, (int)($options['warmup'] ?? 3));
 $timeoutMs   = max(200, (int)($options['timeout'] ?? 1500));
 $concurrency = max(1, (int)($options['concurrency'] ?? 8));
 $noClip      = (bool)($options['no-clip'] ?? false);
@@ -35,13 +35,13 @@ if ($servers === []) {
 }
 
 if ($servers === []) {
-    fwrite(STDERR, "[BLAD] Brak serwerow do sprawdzenia. Uzupelnij plik servers.txt.\n");
+    fwrite(STDERR, "[ERROR] No servers to test. Please populate servers.txt.\n");
     exit(1);
 }
 
 $total = count($servers);
 echo "============================================================================\n";
-echo "  Test pingu do serwerow ({$total} serwerow, {$count} pakiety, rownolegle: {$concurrency})\n";
+echo "  Server Ping Test ({$total} servers, {$count} packets, concurrency: {$concurrency})\n";
 echo "============================================================================\n\n";
 
 $results = runParallelPings($servers, $count, $warmup, $timeoutMs, $concurrency);
@@ -57,7 +57,7 @@ foreach ($servers as $idx => $srv) {
     if ($res['avg'] !== null) {
         echo "[{$num}/{$total}] {$label} -> {$res['avg']} ms (min: {$res['min']}, max: {$res['max']}, loss: {$res['loss']}%)\n";
     } else {
-        echo "[{$num}/{$total}] {$label} -> TIMEOUT / BRAK ODPOWIEDZI (loss: {$res['loss']}%)\n";
+        echo "[{$num}/{$total}] {$label} -> TIMEOUT / NO REPLY (loss: {$res['loss']}%)\n";
     }
 }
 
@@ -71,31 +71,37 @@ $payload = [
 
 $json = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
 if (file_put_contents($outFile, $json) === false) {
-    fwrite(STDERR, "[BLAD] Nie udalo sie zapisac pliku: {$outFile}\n");
+    fwrite(STDERR, "[ERROR] Failed to write output file: {$outFile}\n");
     exit(1);
 }
 
 echo "\n============================================================================\n";
-echo "  ZAKONCZONO!\n";
-echo "  Wyniki zapisano do: {$outFile}\n";
+echo "  FINISHED!\n";
+echo "  Results saved to: {$outFile}\n";
 if (!$noClip && copyToClipboard($json)) {
-    echo "  Wynik zostal automatycznie SKOPIOWANY DO SCHOWKA (Ctrl+V).\n";
+    echo "  Results have been automatically COPIED TO CLIPBOARD (Ctrl+V).\n";
 } else {
-    echo "  Skopiuj zawartosc pliku my-pings.json i wklej na stronie WWW.\n";
+    echo "  Copy the contents of my-pings.json and paste it on the website.\n";
 }
 echo "============================================================================\n";
 exit(0);
 
 // -----------------------------------------------------------------------------
-// Lista wbudowana (aktualizowana przez collect_pings.py --sync-player-dir)
+// Embedded server list (updated by collect_pings.py --sync-player-dir)
 // -----------------------------------------------------------------------------
 
 function getEmbeddedServers(): array
 {
     return [
 // === EMBEDDED_SERVERS_START ===
-    ['country' => 'Oracle', 'datacenter' => 'DE', 'ip' => '141.144.226.122'],
-    ['country' => 'Hetzner', 'datacenter' => 'DE', 'ip' => '195.201.151.197'],
+    ['country' => 'OVH', 'datacenter' => 'Canada', 'ip' => '158.69.209.112'],
+    ['country' => 'Oracle', 'datacenter' => 'Germany', 'ip' => '141.144.226.122'],
+    ['country' => 'Hetzner', 'datacenter' => 'Germany', 'ip' => '195.201.151.197'],
+    ['country' => 'OVH', 'datacenter' => 'Germany', 'ip' => '57.129.112.208'],
+    ['country' => 'OVH', 'datacenter' => 'France', 'ip' => '51.178.27.242'],
+    ['country' => 'OVH', 'datacenter' => 'Poland', 'ip' => '54.37.128.135'],
+    ['country' => 'OVH', 'datacenter' => 'United Kingdom', 'ip' => '57.129.154.151'],
+    ['country' => 'OVH', 'datacenter' => 'US-East', 'ip' => '51.81.87.10'],
 // === EMBEDDED_SERVERS_END ===
     ];
 }

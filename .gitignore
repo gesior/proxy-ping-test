@@ -1,9 +1,9 @@
-# Konfiguracja serwerów (zawiera IP oraz loginy SSH)
+# Server configuration (contains IPs and SSH usernames)
 *.csv
 !1-ssh-ping-collector/servers.example.csv
 2-player-ping-tool/servers.txt
 
-# Wygenerowane wyniki pingów (admin i gracze)
+# Generated ping results (admin and players)
 server-pings.json
 server-pings.js
 3-web-viewer/data/server-pings.json
@@ -12,13 +12,13 @@ my-pings.json
 my-pings*.json
 *.tmp
 
-# Python / środowisko
+# Python / environment
 __pycache__/
 *.py[cod]
 .venv/
 venv/
 
-# Systemowe / edytory
+# OS / editors
 .DS_Store
 Thumbs.db
 .vscode/

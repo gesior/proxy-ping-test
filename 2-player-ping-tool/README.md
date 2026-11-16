@@ -1,33 +1,34 @@
-# 2. Narzędzie dla graczy (`ping-servers.bat` / `ping-servers.php`)
+# 2. Player Ping Tool (`ping-servers.bat` / `ping-servers.php`)
 
-Prosty, w pełni jawny skrypt, który gracz może otworzyć w Notatniku, aby upewnić się, że nie robi nic podejrzanego: uruchamia wyłącznie systemowy program `ping` dla podanej listy serwerów, zapisuje wynik do `my-pings.json` i kopiuje go do schowka.
+Simple, fully transparent scripts that any player can open in Notepad to verify they are safe: they only run the built-in `ping` command for the listed servers, save the results to `my-pings.json`, and copy them to the clipboard.
 
-## Wersja `.bat` (zalecana dla graczy Windows)
+## `.bat` Version (Recommended for Windows Players)
 
-- Plik: `ping-servers.bat`
-- Nie wymaga instalowania żadnych programów ani bibliotek.
-- Działa z plikiem `servers.txt` obok skryptu **lub całkowicie samodzielnie** (korzysta wtedy z listy wbudowanej w sam skrypt — zaktualizowanej automatycznie przez `collect_pings.py --sync-player-dir`).
-- Po zakończeniu zapisuje `my-pings.json` i automatycznie kopiuje go do schowka (`Ctrl+V` na stronie WWW).
+- File: `ping-servers.bat`
+- Requires zero extra software or libraries.
+- Works with `servers.txt` next to the script **or completely standalone** using the embedded server list (automatically updated by `collect_pings.py --sync-player-dir`).
+- Saves `my-pings.json` and automatically copies it to the clipboard (`Ctrl+V` on the website).
 
-### Jak uruchomić
+### How to Run
 
-1. Rozpakuj / pobierz `ping-servers.bat` (opcjonalnie z `servers.txt`).
-2. Kliknij dwukrotnie `ping-servers.bat`.
-3. Poczekaj na zakończenie testu, przejdź na stronę WWW i wklej wynik (`Ctrl+V`).
+1. Download `ping-servers.bat` (optionally with `servers.txt`).
+2. Double-click `ping-servers.bat`.
+3. Wait for the test to finish, open the website, and paste the result (`Ctrl+V`).
 
-## Wersja `.php` (Windows / Linux / macOS)
+## `.php` Version (Windows / Linux / macOS)
 
-- Plik: `ping-servers.php`
-- Wymaga PHP CLI (7.4+ / 8.x), nie wymaga dodatkowych rozszerzeń ani Composera.
-- Odpytuje serwery **równolegle** (domyślnie 8 naraz), więc przy bardzo dużej liczbie serwerów kończy test znacznie szybciej.
+- File: `ping-servers.php`
+- Requires PHP CLI (7.4+ / 8.x), no external extensions or Composer packages.
+- Pings servers **in parallel** (8 at a time by default), finishing in a few seconds even with large server lists.
 
 ```bash
 php ping-servers.php
 ```
 
-Dodatkowe opcje:
-- `--count=4` — liczba pakietów `ping` na serwer
-- `--timeout=1500` — timeout w ms
-- `--concurrency=8` — liczba równoległych procesów `ping`
-- `--servers=sciezka.txt` — własny plik z listą serwerów
-- `--out=wynik.json` — własna ścieżka pliku wyjściowego
+Optional flags:
+- `--count=4` — number of measured `ping` packets per server
+- `--warmup=1` — initial warmup packets discarded from stats (default: `1`)
+- `--timeout=1500` — timeout in ms
+- `--concurrency=8` — number of concurrent `ping` processes
+- `--servers=path.txt` — custom server list file
+- `--out=result.json` — custom output file path

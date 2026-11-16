@@ -19,10 +19,10 @@
 
   function normalizeServerData(raw) {
     if (!raw || typeof raw !== 'object' || !Array.isArray(raw.servers)) {
-      throw new Error('Nieprawidłowy format JSON serwerów (brak tablicy "servers").');
+      throw new Error('Invalid server JSON format (missing "servers" array).');
     }
     if (!raw.matrix || typeof raw.matrix !== 'object') {
-      throw new Error('Nieprawidłowy format JSON serwerów (brak obiektu "matrix").');
+      throw new Error('Invalid server JSON format (missing "matrix" object).');
     }
 
     var servers = raw.servers
@@ -131,7 +131,7 @@
           totalKnown: servers.length,
           unrecognizedKeys: [],
           format: 'invalid-json',
-          error: 'Niepoprawny JSON: ' + e.message,
+          error: 'Invalid JSON: ' + e.message,
         };
       }
     } else {
@@ -174,7 +174,7 @@
         totalKnown: servers.length,
         unrecognizedKeys: [],
         format: 'unknown',
-        error: 'Nie udało się rozpoznać formatu danych pingu.',
+        error: 'Could not recognize ping data format.',
       };
     }
 
@@ -200,7 +200,7 @@
       totalKnown: servers.length,
       unrecognizedKeys: unrecognizedKeys,
       format: format,
-      error: matchedCount === 0 ? 'Nie znaleziono żadnych pasujących adresów IP z listy serwerów.' : null,
+      error: matchedCount === 0 ? 'No matching server IP addresses found.' : null,
     };
   }
 

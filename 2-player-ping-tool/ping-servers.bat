@@ -167,6 +167,16 @@ call :add_server "OVH" "Poland" "54.37.128.135"
 call :add_server "OVH" "United Kingdom" "57.129.154.151"
 call :add_server "OVH" "US-East" "51.81.87.10"
 call :add_server "BR-digital" "Brazil" "201.16.9.3"
+call :add_server "AWS" "Brazil (DynamoDB)" "35.71.106.131"
+call :add_server "AWS" "Brazil (S3)" "3.5.232.31"
+call :add_server "GCP" "Brazil (Storage REP)" "34.1.97.34"
+call :add_server "GCP" "Brazil (Compute REP)" "34.190.238.132"
+call :add_server "Azure" "Brazil (ACR)" "191.234.139.23"
+call :add_server "Azure" "Brazil (SQL)" "191.234.142.160"
+call :add_server "Oracle" "Brazil (SaoPaulo)" "134.70.84.3"
+call :add_server "Oracle" "Brazil (Vinhedo)" "134.70.140.1"
+call :add_server "Vultr" "Brazil (SaoPaulo)" "216.238.98.118"
+call :add_server "DataPacket" "Brazil (Equinix SP4)" "138.199.4.1"
 :: === EMBEDDED_SERVERS_END ===
 goto :eof
 

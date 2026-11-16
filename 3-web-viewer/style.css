@@ -280,6 +280,32 @@ textarea:focus {
   margin-top: 8px;
 }
 
+.drop-hint {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 11px;
+  border-radius: 7px;
+  border: 1px dashed var(--border);
+  background: rgba(24, 34, 53, 0.55);
+  color: var(--muted);
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.drop-hint:hover {
+  border-color: var(--accent);
+  background: rgba(56, 189, 248, 0.08);
+  color: var(--text);
+}
+
+.drop-hint-icon {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
 .parse-status {
   margin-top: 8px;
   font-size: 12.5px;
@@ -767,4 +793,76 @@ textarea:focus {
   color: var(--worse-text);
   font-size: 12.5px;
   margin-top: 6px;
+}
+
+/* Full-page drag & drop overlay and toast */
+.drop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(6, 12, 24, 0.78);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  pointer-events: none;
+}
+
+.drop-overlay-card {
+  width: min(520px, 100%);
+  padding: 36px 28px;
+  border-radius: 16px;
+  border: 2px dashed var(--accent);
+  background: rgba(18, 25, 40, 0.96);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(56, 189, 248, 0.15);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.drop-overlay-icon {
+  color: var(--accent);
+  margin-bottom: 2px;
+}
+
+.drop-overlay-title {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.drop-overlay-desc {
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+.drop-toast {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 210;
+  max-width: min(440px, calc(100vw - 40px));
+  padding: 10px 14px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+
+.drop-toast.ok {
+  border-color: var(--gain-border);
+  background: #0d241c;
+  color: var(--gain-text);
+}
+
+.drop-toast.err {
+  border-color: rgba(239, 68, 68, 0.55);
+  background: #281217;
+  color: var(--worse-text);
 }

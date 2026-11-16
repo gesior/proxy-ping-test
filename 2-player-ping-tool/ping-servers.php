@@ -103,6 +103,16 @@ function getEmbeddedServers(): array
     ['country' => 'OVH', 'datacenter' => 'United Kingdom', 'ip' => '57.129.154.151'],
     ['country' => 'OVH', 'datacenter' => 'US-East', 'ip' => '51.81.87.10'],
     ['country' => 'BR-digital', 'datacenter' => 'Brazil', 'ip' => '201.16.9.3'],
+    ['country' => 'AWS', 'datacenter' => 'Brazil (DynamoDB)', 'ip' => '35.71.106.131'],
+    ['country' => 'AWS', 'datacenter' => 'Brazil (S3)', 'ip' => '3.5.232.31'],
+    ['country' => 'GCP', 'datacenter' => 'Brazil (Storage REP)', 'ip' => '34.1.97.34'],
+    ['country' => 'GCP', 'datacenter' => 'Brazil (Compute REP)', 'ip' => '34.190.238.132'],
+    ['country' => 'Azure', 'datacenter' => 'Brazil (ACR)', 'ip' => '191.234.139.23'],
+    ['country' => 'Azure', 'datacenter' => 'Brazil (SQL)', 'ip' => '191.234.142.160'],
+    ['country' => 'Oracle', 'datacenter' => 'Brazil (SaoPaulo)', 'ip' => '134.70.84.3'],
+    ['country' => 'Oracle', 'datacenter' => 'Brazil (Vinhedo)', 'ip' => '134.70.140.1'],
+    ['country' => 'Vultr', 'datacenter' => 'Brazil (SaoPaulo)', 'ip' => '216.238.98.118'],
+    ['country' => 'DataPacket', 'datacenter' => 'Brazil (Equinix SP4)', 'ip' => '138.199.4.1'],
 // === EMBEDDED_SERVERS_END ===
     ];
 }

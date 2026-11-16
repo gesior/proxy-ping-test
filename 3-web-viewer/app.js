@@ -13,10 +13,25 @@
         'Wyświetlane są przykładowe pomiary serwer↔serwer. Podmień plik <code>data/server-pings.json</code> (lub kliknij „Wgraj server-pings.json”), aby użyć własnych wyników z <code>collect_pings.py</code>.',
       step1Title: '1. Twój ping do serwerów',
       step1Desc:
-        'Uruchom <code>ping-servers.bat</code> (lub <code>ping-servers.php</code>) na swoim komputerze, a następnie wklej wynik ze schowka poniżej.',
+        'Uruchom <code>ping-servers.bat</code> (lub <code>ping-servers.php</code>) na swoim komputerze, a następnie wklej wynik ze schowka lub przeciągnij i upuść plik <code>my-pings.json</code> w dowolne miejsce na stronie.',
       pasteClipboardBtn: 'Wklej ze schowka',
       uploadPlayerBtn: 'Wgraj my-pings.json',
       clearBtn: 'Wyczyść',
+      playerInputPlaceholder:
+        'Wklej zawartość my-pings.json tutaj albo przeciągnij i upuść plik w dowolne miejsce strony (obsługuje też linie typu 1.2.3.4=35)...',
+      dropHintText:
+        'Możesz też przeciągnąć i upuścić plik <code>my-pings.json</code> w dowolne miejsce tej strony (lub kliknąć tutaj, aby wybrać plik).',
+      dropPlayerTitle: 'Upuść plik my-pings.json tutaj',
+      dropPlayerDesc: 'Puść w dowolnym miejscu strony, aby wczytać pomiary pingu (.json, .txt, .csv)',
+      dropServerTitle: 'Upuść plik server-pings.json tutaj',
+      dropServerDesc: 'Puść, aby wczytać dane serwerów do pola JSON',
+      dropServerHintInPlayer:
+        'Ten plik wygląda na server-pings.json. Kliknij najpierw „Wgraj server-pings.json” w górnym pasku (a potem upuść lub wybierz plik tam).',
+      fileEmptyErr: 'Plik „{name}” jest pusty.',
+      fileTooLargeErr: 'Plik „{name}” jest za duży (maks. 10 MB).',
+      fileBinaryErr: 'Plik „{name}” nie wygląda na plik tekstowy / JSON.',
+      fileReadErr: 'Nie udało się odczytać pliku „{name}”.',
+      dropFolderErr: 'Upuszczono folder — przeciągnij plik my-pings.json.',
       demoPresetsLabel: 'Przykłady testowe:',
       presetBR: 'Gracz z Brazylii (słaba trasa do EU)',
       presetPL: 'Gracz z Polski (niski ping w EU)',
@@ -35,7 +50,7 @@
       colAlternatives: 'Kolejne opcje',
       step3Title: '3. Tabela każdy-do-każdego (Proxy × Serwer docelowy)',
       step3DescNoPlayer:
-        'Aktualnie wyświetlane są pingi między serwerami. Wklej swój ping w kroku 1, aby zobaczyć +/- ms przez każde proxy.',
+        'Aktualnie wyświetlane są pingi między serwerami. Wklej swój ping lub upuść plik my-pings.json w kroku 1, aby zobaczyć +/- ms przez każde proxy.',
       step3DescWithPlayer:
         'Ujemna wartość zielona (np. -28 ms) oznacza oszczędność czasu przy połączeniu przez proxy. Gwiazdka ★ oznacza najlepsze proxy dla danego celu.',
       viewModeLabel: 'Widok komórek',
@@ -70,7 +85,7 @@
       legRescued: 'Odzyskane (brak trasy bezp.)',
       modalTitle: 'Załaduj plik server-pings.json',
       modalDesc:
-        'Wybierz plik wygenerowany przez <code>1-ssh-ping-collector/collect_pings.py</code> lub wklej jego zawartość JSON poniżej.',
+        'Wybierz plik wygenerowany przez <code>1-ssh-ping-collector/collect_pings.py</code>, przeciągnij go tutaj lub wklej jego zawartość JSON poniżej.',
       modalChooseFile: 'Wybierz plik .json',
       modalApply: 'Zastosuj dane serwerów',
       directWord: 'Bezpośrednio',
@@ -91,10 +106,25 @@
         'Showing sample server-to-server measurements. Replace <code>data/server-pings.json</code> (or click "Load server-pings.json") with your real output from <code>collect_pings.py</code>.',
       step1Title: '1. Your ping to servers',
       step1Desc:
-        'Run <code>ping-servers.bat</code> (or <code>ping-servers.php</code>) on your PC and paste the copied result below.',
+        'Run <code>ping-servers.bat</code> (or <code>ping-servers.php</code>) on your PC, then paste the copied result below or drag &amp; drop <code>my-pings.json</code> anywhere on the page.',
       pasteClipboardBtn: 'Paste from clipboard',
       uploadPlayerBtn: 'Upload my-pings.json',
       clearBtn: 'Clear',
+      playerInputPlaceholder:
+        'Paste my-pings.json content here, or drag & drop the file anywhere on the page (also accepts lines like 1.2.3.4=35)...',
+      dropHintText:
+        'You can also drag &amp; drop <code>my-pings.json</code> anywhere on this page (or click here to choose a file).',
+      dropPlayerTitle: 'Drop my-pings.json anywhere',
+      dropPlayerDesc: 'Release to load your ping measurements (.json, .txt, .csv)',
+      dropServerTitle: 'Drop server-pings.json here',
+      dropServerDesc: 'Release to fill the server data JSON field',
+      dropServerHintInPlayer:
+        'This looks like a server-pings.json file. Click "Load server-pings.json" in the top bar first (then drop or choose it there).',
+      fileEmptyErr: 'File "{name}" is empty.',
+      fileTooLargeErr: 'File "{name}" is too large (max 10 MB).',
+      fileBinaryErr: 'File "{name}" does not appear to be a text / JSON file.',
+      fileReadErr: 'Could not read file "{name}".',
+      dropFolderErr: 'Dropped item is a folder — please drop the my-pings.json file.',
       demoPresetsLabel: 'Demo presets:',
       presetBR: 'Brazil player (poor EU route)',
       presetPL: 'Poland player (low EU ping)',
@@ -113,7 +143,7 @@
       colAlternatives: 'Alternatives',
       step3Title: '3. Every-to-every matrix (Proxy × Target server)',
       step3DescNoPlayer:
-        'Showing server-to-server pings. Paste your pings in step 1 to see +/- ms savings through each proxy.',
+        'Showing server-to-server pings. Paste your pings or drop my-pings.json in step 1 to see +/- ms savings through each proxy.',
       step3DescWithPlayer:
         'Negative green values (e.g. -28 ms) mean time saved using that proxy. Star ★ marks the best proxy for each target.',
       viewModeLabel: 'Cell display',
@@ -147,7 +177,7 @@
       legRescued: 'Rescued (direct timed out)',
       modalTitle: 'Load server-pings.json',
       modalDesc:
-        'Choose the JSON file generated by <code>1-ssh-ping-collector/collect_pings.py</code> or paste it below.',
+        'Choose the JSON file generated by <code>1-ssh-ping-collector/collect_pings.py</code>, drag &amp; drop it here, or paste it below.',
       modalChooseFile: 'Choose .json file',
       modalApply: 'Apply server data',
       directWord: 'Direct',
@@ -214,6 +244,10 @@
     serverJsonPaste: document.getElementById('serverJsonPaste'),
     serverModalError: document.getElementById('serverModalError'),
     btnApplyServerJson: document.getElementById('btnApplyServerJson'),
+    dropOverlay: document.getElementById('dropOverlay'),
+    dropOverlayTitle: document.getElementById('dropOverlayTitle'),
+    dropOverlayDesc: document.getElementById('dropOverlayDesc'),
+    dropToast: document.getElementById('dropToast'),
   };
 
   function t(key) {
@@ -252,12 +286,17 @@
       } else if (
         key === 'demoBannerText' ||
         key === 'step1Desc' ||
+        key === 'dropHintText' ||
         key === 'modalDesc'
       ) {
         nodes[i].innerHTML = t(key);
       } else {
         nodes[i].textContent = t(key);
       }
+    }
+    var phNodes = document.querySelectorAll('[data-i18n-placeholder]');
+    for (var j = 0; j < phNodes.length; j++) {
+      phNodes[j].setAttribute('placeholder', t(phNodes[j].getAttribute('data-i18n-placeholder')));
     }
   }
 
@@ -356,7 +395,9 @@
     var res = PA.parsePlayerPings(trimmed, state.serverData.servers);
     if (res.error) {
       state.playerPings = null;
-      els.playerParseStatus.textContent = res.error;
+      els.playerParseStatus.textContent = isServerMatrixPayload(trimmed)
+        ? t('dropServerHintInPlayer')
+        : res.error;
       els.playerParseStatus.className = 'parse-status err';
     } else {
       state.playerPings = res.pings;
@@ -978,12 +1019,7 @@
   els.playerFileInput.addEventListener('change', function (e) {
     var file = e.target.files && e.target.files[0];
     if (!file) return;
-    var reader = new FileReader();
-    reader.onload = function () {
-      els.playerInput.value = String(reader.result || '');
-      parseAndApplyPlayerText(els.playerInput.value);
-    };
-    reader.readAsText(file);
+    loadPlayerFile(file, false);
     e.target.value = '';
   });
 
@@ -1160,11 +1196,7 @@
   els.serverFileInput.addEventListener('change', function (e) {
     var file = e.target.files && e.target.files[0];
     if (!file) return;
-    var reader = new FileReader();
-    reader.onload = function () {
-      els.serverJsonPaste.value = String(reader.result || '');
-    };
-    reader.readAsText(file);
+    loadServerFile(file, false);
     e.target.value = '';
   });
   els.btnApplyServerJson.addEventListener('click', function () {
@@ -1175,6 +1207,233 @@
       closeModal();
     } catch (err) {
       els.serverModalError.textContent = err.message;
+    }
+  });
+
+  // File reading & global drag-and-drop support (anywhere on page)
+  var MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+  var dragDepth = 0;
+  var toastTimer = null;
+
+  function formatMsg(template, vars) {
+    return String(template || '').replace(/\{(\w+)\}/g, function (_, k) {
+      return vars && vars[k] != null ? String(vars[k]) : '';
+    });
+  }
+
+  function isServerMatrixPayload(rawText) {
+    var trimmed = String(rawText || '').trim();
+    if (!trimmed || trimmed[0] !== '{') return false;
+    try {
+      var obj = JSON.parse(trimmed);
+      return Boolean(
+        obj &&
+          typeof obj === 'object' &&
+          Array.isArray(obj.servers) &&
+          obj.matrix &&
+          typeof obj.matrix === 'object'
+      );
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function showToast(msg, kind) {
+    if (!els.dropToast) return;
+    if (toastTimer) {
+      clearTimeout(toastTimer);
+      toastTimer = null;
+    }
+    els.dropToast.textContent = msg;
+    els.dropToast.className = 'drop-toast ' + (kind === 'err' ? 'err' : 'ok');
+    toastTimer = setTimeout(function () {
+      els.dropToast.classList.add('hidden');
+    }, 3500);
+  }
+
+  function readTextFile(file, onSuccess, onError) {
+    if (!file) return;
+    var fileName = file.name || 'file';
+    if (file.size > MAX_UPLOAD_BYTES) {
+      onError(formatMsg(t('fileTooLargeErr'), { name: fileName }));
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function () {
+      var text = String(reader.result || '');
+      if (text.indexOf('\0') !== -1) {
+        onError(formatMsg(t('fileBinaryErr'), { name: fileName }));
+        return;
+      }
+      onSuccess(text, fileName);
+    };
+    reader.onerror = function () {
+      onError(formatMsg(t('fileReadErr'), { name: fileName }));
+    };
+    reader.readAsText(file);
+  }
+
+  function loadPlayerFile(file, notify) {
+    readTextFile(
+      file,
+      function (text, fileName) {
+        if (!text.trim()) {
+          var emptyMsg = formatMsg(t('fileEmptyErr'), { name: fileName });
+          els.playerParseStatus.textContent = emptyMsg;
+          els.playerParseStatus.className = 'parse-status err';
+          if (notify) showToast(emptyMsg, 'err');
+          return;
+        }
+        els.playerInput.value = text;
+        parseAndApplyPlayerText(text);
+        if (notify) {
+          var isErr = els.playerParseStatus.classList.contains('err');
+          var statusTxt = els.playerParseStatus.textContent || fileName;
+          showToast(fileName + ': ' + statusTxt, isErr ? 'err' : 'ok');
+        }
+      },
+      function (errMsg) {
+        els.playerParseStatus.textContent = errMsg;
+        els.playerParseStatus.className = 'parse-status err';
+        if (notify) showToast(errMsg, 'err');
+      }
+    );
+  }
+
+  function loadServerFile(file, notify) {
+    readTextFile(
+      file,
+      function (text, fileName) {
+        if (!text.trim()) {
+          var emptyMsg = formatMsg(t('fileEmptyErr'), { name: fileName });
+          els.serverModalError.textContent = emptyMsg;
+          if (notify) showToast(emptyMsg, 'err');
+          return;
+        }
+        els.serverModalError.textContent = '';
+        els.serverJsonPaste.value = text;
+        if (notify) {
+          showToast(
+            (state.lang === 'pl' ? 'Wczytano do podglądu: ' : 'Loaded into editor: ') + fileName,
+            'ok'
+          );
+        }
+      },
+      function (errMsg) {
+        els.serverModalError.textContent = errMsg;
+        if (notify) showToast(errMsg, 'err');
+      }
+    );
+  }
+
+  function isServerModalOpen() {
+    return Boolean(els.serverModal && !els.serverModal.classList.contains('hidden'));
+  }
+
+  function hasDraggedFiles(dt) {
+    if (!dt) return false;
+    if (dt.types) {
+      for (var i = 0; i < dt.types.length; i++) {
+        if (dt.types[i] === 'Files') return true;
+      }
+    }
+    return Boolean(dt.files && dt.files.length > 0);
+  }
+
+  function showDropOverlay() {
+    if (!els.dropOverlay) return;
+    var modalOpen = isServerModalOpen();
+    if (els.dropOverlayTitle) {
+      els.dropOverlayTitle.textContent = t(modalOpen ? 'dropServerTitle' : 'dropPlayerTitle');
+    }
+    if (els.dropOverlayDesc) {
+      els.dropOverlayDesc.textContent = t(modalOpen ? 'dropServerDesc' : 'dropPlayerDesc');
+    }
+    els.dropOverlay.classList.remove('hidden');
+    els.dropOverlay.setAttribute('aria-hidden', 'false');
+  }
+
+  function hideDropOverlay() {
+    dragDepth = 0;
+    if (!els.dropOverlay) return;
+    els.dropOverlay.classList.add('hidden');
+    els.dropOverlay.setAttribute('aria-hidden', 'true');
+  }
+
+  window.addEventListener('dragenter', function (e) {
+    if (!hasDraggedFiles(e.dataTransfer)) return;
+    e.preventDefault();
+    dragDepth += 1;
+    showDropOverlay();
+  });
+
+  window.addEventListener('dragover', function (e) {
+    if (!hasDraggedFiles(e.dataTransfer)) return;
+    e.preventDefault();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'copy';
+    }
+    if (dragDepth === 0) {
+      dragDepth = 1;
+      showDropOverlay();
+    }
+  });
+
+  window.addEventListener('dragleave', function (e) {
+    if (dragDepth === 0) return;
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (
+      dragDepth === 0 ||
+      (!e.relatedTarget && (e.target === document || e.target === document.documentElement))
+    ) {
+      hideDropOverlay();
+    }
+  });
+
+  window.addEventListener('drop', function (e) {
+    var dt = e.dataTransfer;
+    var hasFiles = hasDraggedFiles(dt);
+    var files = dt && dt.files;
+    if (!hasFiles && (!files || files.length === 0)) {
+      hideDropOverlay();
+      return;
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+    hideDropOverlay();
+
+    if (!files || files.length === 0) return;
+
+    var firstItem = dt && dt.items && dt.items[0];
+    if (firstItem && typeof firstItem.webkitGetAsEntry === 'function') {
+      var entry = firstItem.webkitGetAsEntry();
+      if (entry && entry.isDirectory) {
+        var folderErr = t('dropFolderErr');
+        if (isServerModalOpen()) {
+          els.serverModalError.textContent = folderErr;
+        } else {
+          els.playerParseStatus.textContent = folderErr;
+          els.playerParseStatus.className = 'parse-status err';
+        }
+        showToast(folderErr, 'err');
+        return;
+      }
+    }
+
+    var file = files[0];
+    if (isServerModalOpen()) {
+      loadServerFile(file, true);
+    } else {
+      loadPlayerFile(file, true);
+    }
+  });
+
+  window.addEventListener('dragend', hideDropOverlay);
+  window.addEventListener('blur', hideDropOverlay);
+  window.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      hideDropOverlay();
     }
   });
 
